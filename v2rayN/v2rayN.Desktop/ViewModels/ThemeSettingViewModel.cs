@@ -1,12 +1,6 @@
-using System.Reactive.Linq;
-using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
-using Avalonia.Media;
-using Avalonia.Styling;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using AvaloniaEdit;
 using Semi.Avalonia;
 
 namespace v2rayN.Desktop.ViewModels;
@@ -21,7 +15,7 @@ public class ThemeSettingViewModel : MyReactiveObject
 
     public ThemeSettingViewModel()
     {
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
 
         BindingUI();
         RestoreUI();
@@ -74,7 +68,7 @@ public class ThemeSettingViewModel : MyReactiveObject
                     _config.UiItem.CurrentLanguage = CurrentLanguage;
                     Thread.CurrentThread.CurrentUICulture = new(CurrentLanguage);
                     ConfigHandler.SaveConfig(_config);
-                    NoticeHandler.Instance.Enqueue(ResUI.NeedRebootTips);
+                    NoticeManager.Instance.Enqueue(ResUI.NeedRebootTips);
                 }
             });
     }
@@ -101,17 +95,21 @@ public class ThemeSettingViewModel : MyReactiveObject
     {
         double size = CurrentFontSize;
         if (size < Global.MinFontSize)
+        {
             return;
+        }
 
         Style style = new(x => Selectors.Or(
             x.OfType<Button>(),
             x.OfType<TextBox>(),
             x.OfType<TextBlock>(),
+            x.OfType<SelectableTextBlock>(),
             x.OfType<Menu>(),
             x.OfType<ContextMenu>(),
             x.OfType<DataGridRow>(),
             x.OfType<ListBoxItem>(),
-            x.OfType<HeaderedContentControl>()
+            x.OfType<HeaderedContentControl>(),
+            x.OfType<TextEditor>()
         ));
         style.Add(new Setter()
         {
@@ -146,12 +144,14 @@ public class ThemeSettingViewModel : MyReactiveObject
                 x.OfType<Button>(),
                 x.OfType<TextBox>(),
                 x.OfType<TextBlock>(),
+                x.OfType<SelectableTextBlock>(),
                 x.OfType<Menu>(),
                 x.OfType<ContextMenu>(),
                 x.OfType<DataGridRow>(),
                 x.OfType<ListBoxItem>(),
                 x.OfType<HeaderedContentControl>(),
-                x.OfType<WindowNotificationManager>()
+                x.OfType<WindowNotificationManager>(),
+                x.OfType<TextEditor>()
             ));
             style.Add(new Setter()
             {

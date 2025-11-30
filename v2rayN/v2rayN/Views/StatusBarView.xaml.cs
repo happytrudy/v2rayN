@@ -1,10 +1,4 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
-using ReactiveUI;
-using Splat;
-using v2rayN.Handler;
+using v2rayN.Manager;
 
 namespace v2rayN.Views;
 
@@ -15,9 +9,9 @@ public partial class StatusBarView
     public StatusBarView()
     {
         InitializeComponent();
-        _config = AppHandler.Instance.Config;
-        ViewModel = new StatusBarViewModel(UpdateViewHandler);
-        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(StatusBarViewModel));
+        _config = AppManager.Instance.Config;
+        ViewModel = StatusBarViewModel.Instance;
+        ViewModel?.InitUpdateView(UpdateViewHandler);
 
         menuExit.Click += menuExit_Click;
         txtRunningServerDisplay.PreviewMouseDown += txtRunningInfoDisplay_MouseDoubleClick;
@@ -76,33 +70,20 @@ public partial class StatusBarView
     {
         switch (action)
         {
-            case EViewAction.DispatcherServerAvailability:
-                if (obj is null)
-                    return false;
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.TestServerAvailabilityResult((string)obj);
-                }), DispatcherPriority.Normal);
-                break;
-
-            case EViewAction.DispatcherRefreshServersBiz:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.RefreshServersBiz();
-                }), DispatcherPriority.Normal);
-                break;
-
             case EViewAction.DispatcherRefreshIcon:
-                Application.Current?.Dispatcher.Invoke((async () =>
+                Application.Current?.Dispatcher.Invoke(async () =>
                 {
-                    tbNotify.Icon = await WindowsHandler.Instance.GetNotifyIcon(_config);
-                    Application.Current.MainWindow.Icon = WindowsHandler.Instance.GetAppIcon(_config);
-                }), DispatcherPriority.Normal);
+                    tbNotify.Icon = await WindowsManager.Instance.GetNotifyIcon(_config);
+                    Application.Current.MainWindow.Icon = WindowsManager.Instance.GetAppIcon(_config);
+                }, DispatcherPriority.Normal);
                 break;
 
             case EViewAction.SetClipboardData:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 WindowsUtils.SetClipboardData((string)obj);
                 break;
         }
@@ -112,9 +93,7 @@ public partial class StatusBarView
     private async void menuExit_Click(object sender, RoutedEventArgs e)
     {
         tbNotify.Dispose();
-        var service = Locator.Current.GetService<MainWindowViewModel>();
-        if (service != null)
-            await service.MyAppExitAsync(false);
+        await AppManager.Instance.AppExitAsync(true);
     }
 
     private void txtRunningInfoDisplay_MouseDoubleClick(object sender, MouseButtonEventArgs e)

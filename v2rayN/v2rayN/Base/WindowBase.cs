@@ -1,6 +1,3 @@
-using System.Windows;
-using ReactiveUI;
-
 namespace v2rayN.Base;
 
 public class WindowBase<TViewModel> : ReactiveWindow<TViewModel> where TViewModel : class
@@ -14,7 +11,7 @@ public class WindowBase<TViewModel> : ReactiveWindow<TViewModel> where TViewMode
     {
         try
         {
-            var sizeItem = ConfigHandler.GetWindowSizeItem(AppHandler.Instance.Config, GetType().Name);
+            var sizeItem = ConfigHandler.GetWindowSizeItem(AppManager.Instance.Config, GetType().Name);
             if (sizeItem == null)
             {
                 return;
@@ -35,7 +32,7 @@ public class WindowBase<TViewModel> : ReactiveWindow<TViewModel> where TViewMode
 
         try
         {
-            ConfigHandler.SaveWindowSizeItem(AppHandler.Instance.Config, GetType().Name, Width, Height);
+            ConfigHandler.SaveWindowSizeItem(AppManager.Instance.Config, GetType().Name, Width, Height);
         }
         catch { }
     }

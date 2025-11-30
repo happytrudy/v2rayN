@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -472,10 +472,10 @@
     <value>زبان</value>
   </data>
   <data name="menuAddServerViaClipboard" xml:space="preserve">
-    <value>وارد کردن URL انبوه از کلیپ بورد (Ctrl+V)</value>
+    <value>وارد کردن URL انبوه از کلیپ بورد</value>
   </data>
   <data name="menuAddServerViaScan" xml:space="preserve">
-    <value>اسکن کد QR روی صفحه (Ctrl+S)</value>
+    <value>اسکن کد QR روی صفحه</value>
   </data>
   <data name="menuCopyServer" xml:space="preserve">
     <value>سرور انتخاب شده را شبیه سازی کنید</value>
@@ -484,31 +484,31 @@
     <value>سرورهای تکراری را حذف کنید</value>
   </data>
   <data name="menuRemoveServer" xml:space="preserve">
-    <value>حذف سرورهای انتخابی (Delete)</value>
+    <value>حذف سرورهای انتخابی</value>
   </data>
   <data name="menuSetDefaultServer" xml:space="preserve">
-    <value>به عنوان سرور فعال تنظیم کنید (Enter)</value>
+    <value>به عنوان سرور فعال تنظیم کنید</value>
   </data>
   <data name="menuClearServerStatistics" xml:space="preserve">
     <value>تمام آمار خدمات را پاک کنید</value>
   </data>
   <data name="menuRealPingServer" xml:space="preserve">
-    <value>آزمایش سرورها با تاخیر واقعی (Ctrl+R)</value>
+    <value>آزمایش سرورها با تاخیر واقعی</value>
   </data>
   <data name="menuSortServerResult" xml:space="preserve">
     <value>مرتب سازی بر اساس نتیجه تست</value>
   </data>
   <data name="menuSpeedServer" xml:space="preserve">
-    <value>تست سرعت دانلود سرورها (Ctrl+T)</value>
+    <value>تست سرعت دانلود سرورها</value>
   </data>
   <data name="menuTcpingServer" xml:space="preserve">
-    <value>تست سرورها با tcping (Ctrl+O)</value>
+    <value>تست سرورها با tcping</value>
   </data>
   <data name="menuExport2ClientConfig" xml:space="preserve">
     <value>سرور انتخابی را برای پیکربندی کلاینت صادر کنید</value>
   </data>
   <data name="menuExport2ShareUrl" xml:space="preserve">
-    <value>URL های اشتراک گذاری را به کلیپ بورد صادر کنید (Ctrl+C)</value>
+    <value>URL های اشتراک گذاری را به کلیپ بورد صادر کنید</value>
   </data>
   <data name="menuAddCustomServer" xml:space="preserve">
     <value>یک سرور پیکربندی سفارشی اضافه شود</value>
@@ -529,19 +529,19 @@
     <value>سرور [VMess] را اضافه کنید</value>
   </data>
   <data name="menuSelectAll" xml:space="preserve">
-    <value>انتخاب همه (Ctrl+A)</value>
+    <value>انتخاب همه</value>
   </data>
   <data name="menuMsgViewClear" xml:space="preserve">
     <value>همه را پاک کن</value>
   </data>
   <data name="menuMsgViewCopy" xml:space="preserve">
-    <value>کپی (Ctrl+C)</value>
+    <value>کپی</value>
   </data>
   <data name="menuMsgViewCopyAll" xml:space="preserve">
     <value>کپی همه</value>
   </data>
   <data name="menuMsgViewSelectAll" xml:space="preserve">
-    <value>انتخاب همه (Ctrl+A)</value>
+    <value>انتخاب همه</value>
   </data>
   <data name="menuSubAdd" xml:space="preserve">
     <value>اضافه کردن</value>
@@ -675,8 +675,8 @@
   <data name="TbSettingsCore" xml:space="preserve">
     <value>هسته: تنظیمات اولیه</value>
   </data>
-  <data name="TbSettingsCoreDns" xml:space="preserve">
-    <value>تنظیمات V2ray DNS</value>
+  <data name="TbCustomDnsRay" xml:space="preserve">
+    <value>V2ray Custom DNS</value>
   </data>
   <data name="TbSettingsCoreKcp" xml:space="preserve">
     <value>هسته: تنظیمات KCP</value>
@@ -747,9 +747,6 @@
   <data name="TbSettingsSystemproxy" xml:space="preserve">
     <value>تنظیمات پراکسی سیستم</value>
   </data>
-  <data name="TbSettingsTLS13" xml:space="preserve">
-    <value>فعال کردن پروتکل امنیتی TLS نسخه 1.3 (اشتراک/به‌روزرسانی)</value>
-  </data>
   <data name="TbSettingsTrayMenuServersLimit" xml:space="preserve">
     <value>محدودیت نمایش سرورهای منوی سینی کلیک راست</value>
   </data>
@@ -799,13 +796,13 @@
     <value>به پایین حرکت شود(B)</value>
   </data>
   <data name="menuMoveDown" xml:space="preserve">
-    <value>پایین (D)</value>
+    <value>پایین</value>
   </data>
   <data name="menuMoveTop" xml:space="preserve">
-    <value>حرکت به بالا (T)</value>
+    <value>حرکت به بالا</value>
   </data>
   <data name="menuMoveUp" xml:space="preserve">
-    <value>بالا (U)</value>
+    <value>بالا</value>
   </data>
   <data name="MsgFilterTitle" xml:space="preserve">
     <value>فیلتر، از عبارات منظم پشتیبانی می کند</value>
@@ -824,9 +821,6 @@
   </data>
   <data name="menuRoutingAdvancedSetDefault" xml:space="preserve">
     <value>تنظیم کردن به عنوان قانون فعال</value>
-  </data>
-  <data name="TbdomainMatcher" xml:space="preserve">
-    <value>تطبیق دامنه</value>
   </data>
   <data name="TbdomainStrategy" xml:space="preserve">
     <value>استراتژی دامنه</value>
@@ -895,7 +889,7 @@
     <value>تاخیر (میلی‌ثانیه)</value>
   </data>
   <data name="LvTestSpeed" xml:space="preserve">
-    <value>سرعت (M/s)</value>
+    <value>سرعت (MB/s)</value>
   </data>
   <data name="FailedToRunCore" xml:space="preserve">
     <value>Core اجرا نشد، لطفاً گزارش را ببینید</value>
@@ -928,7 +922,7 @@
     <value>رد شدن از آزمون</value>
   </data>
   <data name="menuEditServer" xml:space="preserve">
-    <value>ویرایش سرور (Ctrl+D)</value>
+    <value>ویرایش سرور</value>
   </data>
   <data name="TbSettingsDoubleClick2Activate" xml:space="preserve">
     <value>دوبار کلیک کردن سرور باعث فعال شدن آن می شود</value>
@@ -982,7 +976,10 @@
     <value>فعال‌ سازی شتاب‌ دهنده سخت‌ افزاری (نیاز به راه‌اندازی مجدد)</value>
   </data>
   <data name="SpeedtestingWait" xml:space="preserve">
-    <value>در انتظار آزمایش (برای پایان دادن به ESC فشار دهید)...</value>
+    <value>در انتظار آزمایش...</value>
+  </data>
+  <data name="SpeedtestingPressEscToExit" xml:space="preserve">
+    <value>برای پایان دادن به ESC فشار دهید</value>
   </data>
   <data name="TipDisplayLog" xml:space="preserve">
     <value>لطفاً در صورت قطع غیرعادی آن را خاموش کنید</value>
@@ -1014,8 +1011,8 @@
   <data name="menuDNSSetting" xml:space="preserve">
     <value>تنظیمات DNS</value>
   </data>
-  <data name="TbSettingsCoreDnsSingbox" xml:space="preserve">
-    <value>تنظیمات DNS sing-box</value>
+  <data name="TbCustomDnsSingbox" xml:space="preserve">
+    <value>sing-box Custom DNS</value>
   </data>
   <data name="TbDnsSingboxObjectDoc" xml:space="preserve">
     <value>لطفا ساختار DNS را پر کنید، برای مشاهده سند کلیک کنید</value>
@@ -1062,6 +1059,18 @@
   <data name="LvPrevProfileTip" xml:space="preserve">
     <value>لطفاً مطمئن شوید که ملاحظات وجود دارند و منحصر به فرد هستند</value>
   </data>
+  <data name="TbSettingsTunAutoRoute" xml:space="preserve">
+    <value>مسیریابی خودکار</value>
+  </data>
+  <data name="TbSettingsTunStrictRoute" xml:space="preserve">
+    <value>مسیریابی سخت‌گیرانه</value>
+  </data>
+  <data name="TbSettingsTunStack" xml:space="preserve">
+    <value>پشته شبکه</value>
+  </data>
+  <data name="TbSettingsTunMtu" xml:space="preserve">
+    <value>MTU</value>
+  </data>
   <data name="TbSettingsEnableExInbound" xml:space="preserve">
     <value>فعال سازی additional Inbound</value>
   </data>
@@ -1105,7 +1114,7 @@
     <value>افزودن سرور [HTTP]</value>
   </data>
   <data name="TbSettingsEnableFragmentTips" xml:space="preserve">
-    <value>از Xray استفاده کنید و حالت non-Tun را فعال کنید، که با پراکسی قبلی گروه در تضاد است</value>
+    <value>which conflicts with the group previous proxy</value>
   </data>
   <data name="TbSettingsEnableFragment" xml:space="preserve">
     <value>فعال کردن فرگمنت</value>
@@ -1198,7 +1207,7 @@
     <value>تازه سازی پروکسی ها</value>
   </data>
   <data name="menuProxiesSelectActivity" xml:space="preserve">
-    <value>انتخاب گره فعال (Enter)</value>
+    <value>انتخاب گره فعال</value>
   </data>
   <data name="TbSettingsDomainStrategy4Out" xml:space="preserve">
     <value>استراتژی دامنه پیش فرض برای خروجی</value>
@@ -1318,7 +1327,7 @@
     <value>رمز عبور sudo سیستم</value>
   </data>
   <data name="TbSettingsLinuxSudoPasswordTip" xml:space="preserve">
-    <value>رمز عبوری که وارد کرده اید تایید نمی شود، بنابراین مطمئن شوید که آن را به درستی وارد کرده اید. اگر برنامه به دلیل ورودی نادرست به درستی کار نمی کند، لطفاً برنامه را مجدداً راه اندازی کنید. رمز عبور ذخیره نمی شود و پس از هر بار راه اندازی مجدد باید آن را دوباره وارد کنید.</value>
+    <value>The password will be validated via the command line. If a validation error causes the application to malfunction, please restart the application. The password will not be stored and must be entered again after each restart.</value>
   </data>
   <data name="TransportHeaderTypeTip5" xml:space="preserve">
     <value>*حالت xhttp</value>
@@ -1368,22 +1377,22 @@
   <data name="TbPorts7Tips" xml:space="preserve">
     <value>مخفی و پورت می شود، با کاما (،) جدا می شود</value>
   </data>
-  <data name="menuSetDefaultMultipleServer" xml:space="preserve">
-    <value>چند سرور به پیکربندی سفارشی</value>
+  <data name="menuGenGroupMultipleServer" xml:space="preserve">
+    <value>Generate Policy Group from Multiple Profiles</value>
   </data>
-  <data name="menuSetDefaultMultipleServerXrayRandom" xml:space="preserve">
+  <data name="menuGenGroupMultipleServerXrayRandom" xml:space="preserve">
     <value>چند سرور تصادفی توسط Xray</value>
   </data>
-  <data name="menuSetDefaultMultipleServerXrayRoundRobin" xml:space="preserve">
+  <data name="menuGenGroupMultipleServerXrayRoundRobin" xml:space="preserve">
     <value>چند سرور RoundRobin توسط Xray</value>
   </data>
-  <data name="menuSetDefaultMultipleServerXrayLeastPing" xml:space="preserve">
+  <data name="menuGenGroupMultipleServerXrayLeastPing" xml:space="preserve">
     <value>چند سرور LeastPing توسط Xray</value>
   </data>
-  <data name="menuSetDefaultMultipleServerXrayLeastLoad" xml:space="preserve">
+  <data name="menuGenGroupMultipleServerXrayLeastLoad" xml:space="preserve">
     <value>چند سرور LeastLoad توسط Xray</value>
   </data>
-  <data name="menuSetDefaultMultipleServerSingBoxLeastPing" xml:space="preserve">
+  <data name="menuGenGroupMultipleServerSingBoxLeastPing" xml:space="preserve">
     <value>LeastPing چند سرور توسط sing-box</value>
   </data>
   <data name="menuExportConfig" xml:space="preserve">
@@ -1391,5 +1400,245 @@
   </data>
   <data name="TbSettingsIPAPIUrl" xml:space="preserve">
     <value>URL آزمایش اطلاعات اتصال فعلی</value>
+  </data>
+  <data name="TbRuleOutboundTagTip" xml:space="preserve">
+    <value>Can fill in the configuration remarks, please make sure it exist and are unique</value>
+  </data>
+  <data name="SudoIncorrectPasswordTip" xml:space="preserve">
+    <value>Incorrect password, please try again.</value>
+  </data>
+  <data name="TbMldsa65Verify" xml:space="preserve">
+    <value>Mldsa65Verify</value>
+  </data>
+  <data name="menuAddAnytlsServer" xml:space="preserve">
+    <value>Add [Anytls] Configuration</value>
+  </data>
+  <data name="TbRemoteDNS" xml:space="preserve">
+    <value>Remote DNS</value>
+  </data>
+  <data name="TbDomesticDNS" xml:space="preserve">
+    <value>Domestic DNS</value>
+  </data>
+  <data name="TbRemoteDNSTips" xml:space="preserve">
+    <value>Via proxy — please ensure remote availability</value>
+  </data>
+  <data name="TbXrayFreedomStrategy" xml:space="preserve">
+    <value>xray Freedom Resolution Strategy</value>
+  </data>
+  <data name="TbSBDirectResolveStrategy" xml:space="preserve">
+    <value>sing-box Direct Resolution Strategy</value>
+  </data>
+  <data name="TbSBRemoteResolveStrategy" xml:space="preserve">
+    <value>sing-box Remote Resolution Strategy</value>
+  </data>
+  <data name="TbAddCommonDNSHosts" xml:space="preserve">
+    <value>Add Common DNS Hosts</value>
+  </data>
+  <data name="TbFakeIP" xml:space="preserve">
+    <value>FakeIP</value>
+  </data>
+  <data name="TbBlockSVCBHTTPSQueries" xml:space="preserve">
+    <value>Block SVCB and HTTPS Queries</value>
+  </data>
+  <data name="TbDNSHostsConfig" xml:space="preserve">
+    <value>DNS Hosts: ("domain1 ip1 ip2" per line)</value>
+  </data>
+  <data name="ThBasicDNSSettings" xml:space="preserve">
+    <value>Basic DNS Settings</value>
+  </data>
+  <data name="ThAdvancedDNSSettings" xml:space="preserve">
+    <value>Advanced DNS Settings</value>
+  </data>
+  <data name="TbValidateDirectExpectedIPs" xml:space="preserve">
+    <value>Validate Regional Domain IPs</value>
+  </data>
+  <data name="TbValidateDirectExpectedIPsDesc" xml:space="preserve">
+    <value>When configured, validates IPs returned for regional domains (e.g., geosite:cn), returning only expected IPs</value>
+  </data>
+  <data name="TbCustomDNSEnable" xml:space="preserve">
+    <value>Enable Custom DNS</value>
+  </data>
+  <data name="TbCustomDNSEnabledPageInvalid" xml:space="preserve">
+    <value>Custom DNS Enabled, This Page's Settings Invalid</value>
+  </data>
+  <data name="TbBlockSVCBHTTPSQueriesTips" xml:space="preserve">
+    <value>Block ECH and HTTP/3 availability checks when enabled</value>
+  </data>
+  <data name="FillCorrectConfigTemplateText" xml:space="preserve">
+    <value>Please fill in the correct config template</value>
+  </data>
+  <data name="menuFullConfigTemplate" xml:space="preserve">
+    <value>Full Config Template Setting</value>
+  </data>
+  <data name="TbFullConfigTemplateEnable" xml:space="preserve">
+    <value>Enable Full Config Template</value>
+  </data>
+  <data name="TbRayFullConfigTemplate" xml:space="preserve">
+    <value>v2ray Full Config Template</value>
+  </data>
+  <data name="TbRayFullConfigTemplateDesc" xml:space="preserve">
+    <value>Add Outbound Config Only, routing.balancers and routing.rules.outboundTag, Click to view the document</value>
+  </data>
+  <data name="TbAddProxyProtocolOutboundOnly" xml:space="preserve">
+    <value>Do Not Add Non-Proxy Protocol Outbound</value>
+  </data>
+  <data name="TbSetUpstreamProxyDetour" xml:space="preserve">
+    <value>Set Upstream Proxy Tag</value>
+  </data>
+  <data name="TbSBFullConfigTemplate" xml:space="preserve">
+    <value>sing-box Full Config Template</value>
+  </data>
+  <data name="TbSBFullConfigTemplateDesc" xml:space="preserve">
+    <value>Add Outbound and Endpoint Config Only, Click to view the document</value>
+  </data>
+  <data name="TbFullConfigTemplateDesc" xml:space="preserve">
+    <value>This feature is intended for advanced users and those with special requirements. Once enabled, it will ignore the Core's basic settings, DNS settings, and routing settings. You must ensure that the system proxy port, traffic statistics, and other related configurations are set correctly — everything will be configured by you.</value>
+  </data>
+  <data name="MsgStartParsingSubscription" xml:space="preserve">
+    <value>Start parsing and processing subscription content</value>
+  </data>
+  <data name="TbSelectProfile" xml:space="preserve">
+    <value>Select Profile</value>
+  </data>
+  <data name="TbFakeIPTips" xml:space="preserve">
+    <value>Applies globally by default, with built-in FakeIP filtering (sing-box only).</value>
+  </data>
+  <data name="PleaseAddAtLeastOneServer" xml:space="preserve">
+    <value>Please Add At Least One Configuration</value>
+  </data>
+  <data name="TbConfigTypePolicyGroup" xml:space="preserve">
+    <value>Policy Group</value>
+  </data>
+  <data name="TbConfigTypeProxyChain" xml:space="preserve">
+    <value>Proxy Chain</value>
+  </data>
+  <data name="TbLeastPing" xml:space="preserve">
+    <value>Lowest Latency</value>
+  </data>
+  <data name="TbRandom" xml:space="preserve">
+    <value>Random</value>
+  </data>
+  <data name="TbRoundRobin" xml:space="preserve">
+    <value>Round Robin</value>
+  </data>
+  <data name="TbLeastLoad" xml:space="preserve">
+    <value>Most Stable</value>
+  </data>
+  <data name="TbPolicyGroupType" xml:space="preserve">
+    <value>Policy Group Type</value>
+  </data>
+  <data name="menuAddPolicyGroupServer" xml:space="preserve">
+    <value>Add Policy Group Configuration</value>
+  </data>
+  <data name="menuAddProxyChainServer" xml:space="preserve">
+    <value>Add Proxy Chain Configuration</value>
+  </data>
+  <data name="menuAddChildServer" xml:space="preserve">
+    <value>Add Child Configuration</value>
+  </data>
+  <data name="menuRemoveChildServer" xml:space="preserve">
+    <value>Remove Child Configuration</value>
+  </data>
+  <data name="menuServerList" xml:space="preserve">
+    <value>Configuration item 1, Auto add from subscription group</value>
+  </data>
+  <data name="TbFallback" xml:space="preserve">
+    <value>Fallback</value>
+  </data>
+  <data name="menuGenGroupMultipleServerSingBoxFallback" xml:space="preserve">
+    <value>Multi-Configuration Fallback by sing-box</value>
+  </data>
+  <data name="menuGenGroupMultipleServerXrayFallback" xml:space="preserve">
+    <value>Multi-Configuration Fallback by Xray</value>
+  </data>
+  <data name="CoreNotSupportNetwork" xml:space="preserve">
+    <value>Core '{0}' does not support network type '{1}'.</value>
+  </data>
+  <data name="CoreNotSupportProtocolTransport" xml:space="preserve">
+    <value>Core '{0}' does not support protocol '{1}' when using transport '{2}'.</value>
+  </data>
+  <data name="CoreNotSupportProtocol" xml:space="preserve">
+    <value>Core '{0}' does not support protocol '{1}'.</value>
+  </data>
+  <data name="ProxyChainedPrefix" xml:space="preserve">
+    <value>Proxy chained: </value>
+  </data>
+  <data name="RoutingRuleOutboundPrefix" xml:space="preserve">
+    <value>Routing rule outbound: </value>
+  </data>
+  <data name="PolicyGroupPrefix" xml:space="preserve">
+    <value>Policy group: </value>
+  </data>
+  <data name="NodeTagNotExist" xml:space="preserve">
+    <value>Node alias '{0}' does not exist.</value>
+  </data>
+  <data name="GroupEmpty" xml:space="preserve">
+    <value>Group '{0}' is empty. Please add at least one node.</value>
+  </data>
+  <data name="InvalidProperty" xml:space="preserve">
+    <value>The {0} property is invalid, please check.</value>
+  </data>
+  <data name="GroupSelfReference" xml:space="preserve">
+    <value>{0} Group cannot reference itself or have a circular reference</value>
+  </data>
+  <data name="NotSupportProtocol" xml:space="preserve">
+    <value>Not support protocol '{0}'.</value>
+  </data>
+  <data name="TbSettingsHide2TrayWhenCloseTip" xml:space="preserve">
+    <value>If the system does not have a tray function, please do not enable it</value>
+  </data>
+  <data name="TbRuleType" xml:space="preserve">
+    <value>Rule Type</value>
+  </data>
+  <data name="TbRuleTypeTips" xml:space="preserve">
+    <value>You can set separate rules for Routing and DNS, or select "ALL" to apply to both</value>
+  </data>
+  <data name="TbBootstrapDNS" xml:space="preserve">
+    <value>Bootstrap DNS</value>
+  </data>
+  <data name="TbBootstrapDNSTips" xml:space="preserve">
+    <value>Resolve DNS server domains, requires IP</value>
+  </data>
+  <data name="menuFastRealPing" xml:space="preserve">
+    <value>Test real delay</value>
+  </data>
+  <data name="TbPolicyGroupSubChildTip" xml:space="preserve">
+    <value>Auto add filtered configuration from subscription groups</value>
+  </data>
+  <data name="TbCertPinning" xml:space="preserve">
+    <value>Certificate Pinning</value>
+  </data>
+  <data name="TbCertPinningTips" xml:space="preserve">
+    <value>Server Certificate (PEM format, optional)
+When specified, the certificate will be pinned, and "Allow Insecure" will be disabled.
+
+The "Get Certificate" action may fail if a self-signed certificate is used or if the system contains an untrusted or malicious CA.</value>
+  </data>
+  <data name="TbFetchCert" xml:space="preserve">
+    <value>Fetch Certificate</value>
+  </data>
+  <data name="TbFetchCertChain" xml:space="preserve">
+    <value>Fetch Certificate Chain</value>
+  </data>
+  <data name="ServerNameMustBeValidDomain" xml:space="preserve">
+    <value>Please set a valid domain</value>
+  </data>
+  <data name="CertNotSet" xml:space="preserve">
+    <value>Certificate not set</value>
+  </data>
+  <data name="CertSet" xml:space="preserve">
+    <value>Certificate set</value>
+  </data>
+  <data name="TbSettingsCustomSystemProxyPacPath" xml:space="preserve">
+    <value>Custom PAC file path</value>
+  </data>
+  <data name="TbSettingsCustomSystemProxyScriptPath" xml:space="preserve">
+    <value>Custom system proxy script file path</value>
+  </data>
+  <data name="TbSettingsMacOSShowInDock" xml:space="preserve">
+    <value>macOS displays this in the Dock (requires restart)</value>
+  </data>
+  <data name="menuServerList2" xml:space="preserve">
+    <value>Configuration Item 2, Select and add from self-built</value>
   </data>
 </root>

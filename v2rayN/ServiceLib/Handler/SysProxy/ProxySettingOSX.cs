@@ -1,6 +1,6 @@
 namespace ServiceLib.Handler.SysProxy;
 
-public class ProxySettingOSX
+public static class ProxySettingOSX
 {
     private static readonly string _proxySetFileName = $"{Global.ProxySetOSXShellFileName.Replace(Global.NamespaceSample, "")}.sh";
 
@@ -23,14 +23,13 @@ public class ProxySettingOSX
 
     private static async Task ExecCmd(List<string> args)
     {
-        var fileName = Utils.GetBinConfigPath(_proxySetFileName);
-        if (!File.Exists(fileName))
-        {
-            var contents = EmbedUtils.GetEmbedText(Global.ProxySetOSXShellFileName);
-            await File.AppendAllTextAsync(fileName, contents);
+        var customSystemProxyScriptPath = AppManager.Instance.Config.SystemProxyItem?.CustomSystemProxyScriptPath;
+        var fileName = (customSystemProxyScriptPath.IsNotEmpty() && File.Exists(customSystemProxyScriptPath))
+            ? customSystemProxyScriptPath
+            : await FileUtils.CreateLinuxShellFile(_proxySetFileName, EmbedUtils.GetEmbedText(Global.ProxySetOSXShellFileName), false);
 
-            await Utils.SetLinuxChmod(fileName);
-        }
+        // TODO: temporarily notify which script is being used
+        NoticeManager.Instance.SendMessage(fileName);
 
         await Utils.GetCliWrapOutput(fileName, args);
     }

@@ -1,10 +1,5 @@
-using System.Reactive.Disposables;
-using System.Text;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using ReactiveUI;
-using v2rayN.Handler;
+using v2rayN.Manager;
 
 namespace v2rayN.Views;
 
@@ -16,20 +11,20 @@ public partial class GlobalHotkeySettingWindow
     {
         InitializeComponent();
 
-        this.Owner = Application.Current.MainWindow;
+        Owner = Application.Current.MainWindow;
 
         ViewModel = new GlobalHotkeySettingViewModel(UpdateViewHandler);
 
         btnReset.Click += btnReset_Click;
 
-        HotkeyHandler.Instance.IsPause = true;
-        this.Closing += (s, e) => HotkeyHandler.Instance.IsPause = false;
+        HotkeyManager.Instance.IsPause = true;
+        Closing += (s, e) => HotkeyManager.Instance.IsPause = false;
 
         this.WhenActivated(disposables =>
         {
             this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
         });
-        WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.CurrentTheme);
+        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
 
         Init();
         BindingData();
@@ -40,7 +35,7 @@ public partial class GlobalHotkeySettingWindow
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.DialogResult = true;
+                DialogResult = true;
                 break;
         }
         return await Task.FromResult(true);

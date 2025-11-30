@@ -15,7 +15,7 @@ public static class SysProxyHandler
 
         try
         {
-            var port = AppHandler.Instance.GetLocalPort(EInboundProtocol.socks);
+            var port = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
             var exceptions = config.SystemProxyItem.SystemProxyExceptions.Replace(" ", "");
             if (port <= 0)
             {
@@ -33,7 +33,7 @@ public static class SysProxyHandler
                     await ProxySettingLinux.SetProxy(Global.Loopback, port, exceptions);
                     break;
 
-                case ESysProxyType.ForcedChange when Utils.IsOSX():
+                case ESysProxyType.ForcedChange when Utils.IsMacOS():
                     await ProxySettingOSX.SetProxy(Global.Loopback, port, exceptions);
                     break;
 
@@ -45,7 +45,7 @@ public static class SysProxyHandler
                     await ProxySettingLinux.UnsetProxy();
                     break;
 
-                case ESysProxyType.ForcedClear when Utils.IsOSX():
+                case ESysProxyType.ForcedClear when Utils.IsMacOS():
                     await ProxySettingOSX.UnsetProxy();
                     break;
 
@@ -56,7 +56,7 @@ public static class SysProxyHandler
 
             if (type != ESysProxyType.Pac && Utils.IsWindows())
             {
-                PacHandler.Stop();
+                PacManager.Instance.Stop();
             }
         }
         catch (Exception ex)
@@ -90,8 +90,8 @@ public static class SysProxyHandler
 
     private static async Task SetWindowsProxyPac(int port)
     {
-        var portPac = AppHandler.Instance.GetLocalPort(EInboundProtocol.pac);
-        await PacHandler.Start(Utils.GetConfigPath(), port, portPac);
+        var portPac = AppManager.Instance.GetLocalPort(EInboundProtocol.pac);
+        await PacManager.Instance.StartAsync(port, portPac);
         var strProxy = $"{Global.HttpProtocol}{Global.Loopback}:{portPac}/pac?t={DateTime.Now.Ticks}";
         ProxySettingWindows.SetProxy(strProxy, "", 4);
     }

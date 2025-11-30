@@ -1,7 +1,4 @@
-using System.Reactive.Disposables;
-using System.Windows;
 using System.Windows.Controls;
-using ReactiveUI;
 
 namespace v2rayN.Views;
 
@@ -11,8 +8,8 @@ public partial class AddServerWindow
     {
         InitializeComponent();
 
-        this.Owner = Application.Current.MainWindow;
-        this.Loaded += Window_Loaded;
+        Owner = Application.Current.MainWindow;
+        Loaded += Window_Loaded;
         cmbNetwork.SelectionChanged += CmbNetwork_SelectionChanged;
         cmbStreamSecurity.SelectionChanged += CmbStreamSecurity_SelectionChanged;
         btnGUID.Click += btnGUID_Click;
@@ -20,41 +17,22 @@ public partial class AddServerWindow
 
         ViewModel = new AddServerViewModel(profileItem, UpdateViewHandler);
 
-        Global.CoreTypes.ForEach(it =>
-        {
-            cmbCoreType.Items.Add(it);
-        });
-        cmbCoreType.Items.Add(string.Empty);
+        cmbCoreType.ItemsSource = Global.CoreTypes.AppendEmpty();
+        cmbNetwork.ItemsSource = Global.Networks;
+        cmbFingerprint.ItemsSource = Global.Fingerprints;
+        cmbFingerprint2.ItemsSource = Global.Fingerprints;
+        cmbAllowInsecure.ItemsSource = Global.AllowInsecure;
+        cmbAlpn.ItemsSource = Global.Alpns;
 
-        cmbStreamSecurity.Items.Add(string.Empty);
-        cmbStreamSecurity.Items.Add(Global.StreamSecurity);
-
-        Global.Networks.ForEach(it =>
-        {
-            cmbNetwork.Items.Add(it);
-        });
-        Global.Fingerprints.ForEach(it =>
-        {
-            cmbFingerprint.Items.Add(it);
-            cmbFingerprint2.Items.Add(it);
-        });
-        Global.AllowInsecure.ForEach(it =>
-        {
-            cmbAllowInsecure.Items.Add(it);
-        });
-        Global.Alpns.ForEach(it =>
-        {
-            cmbAlpn.Items.Add(it);
-        });
+        var lstStreamSecurity = new List<string>();
+        lstStreamSecurity.Add(string.Empty);
+        lstStreamSecurity.Add(Global.StreamSecurity);
 
         switch (profileItem.ConfigType)
         {
             case EConfigType.VMess:
                 gridVMess.Visibility = Visibility.Visible;
-                Global.VmessSecurities.ForEach(it =>
-                {
-                    cmbSecurity.Items.Add(it);
-                });
+                cmbSecurity.ItemsSource = Global.VmessSecurities;
                 if (profileItem.Security.IsNullOrEmpty())
                 {
                     profileItem.Security = Global.DefaultSecurity;
@@ -63,10 +41,7 @@ public partial class AddServerWindow
 
             case EConfigType.Shadowsocks:
                 gridSs.Visibility = Visibility.Visible;
-                AppHandler.Instance.GetShadowsocksSecurities(profileItem).ForEach(it =>
-                {
-                    cmbSecurity3.Items.Add(it);
-                });
+                cmbSecurity3.ItemsSource = AppManager.Instance.GetShadowsocksSecurities(profileItem);
                 break;
 
             case EConfigType.SOCKS:
@@ -76,11 +51,8 @@ public partial class AddServerWindow
 
             case EConfigType.VLESS:
                 gridVLESS.Visibility = Visibility.Visible;
-                cmbStreamSecurity.Items.Add(Global.StreamSecurityReality);
-                Global.Flows.ForEach(it =>
-                {
-                    cmbFlow5.Items.Add(it);
-                });
+                lstStreamSecurity.Add(Global.StreamSecurityReality);
+                cmbFlow5.ItemsSource = Global.Flows;
                 if (profileItem.Security.IsNullOrEmpty())
                 {
                     profileItem.Security = Global.None;
@@ -89,11 +61,8 @@ public partial class AddServerWindow
 
             case EConfigType.Trojan:
                 gridTrojan.Visibility = Visibility.Visible;
-                cmbStreamSecurity.Items.Add(Global.StreamSecurityReality);
-                Global.Flows.ForEach(it =>
-                {
-                    cmbFlow6.Items.Add(it);
-                });
+                lstStreamSecurity.Add(Global.StreamSecurityReality);
+                cmbFlow6.ItemsSource = Global.Flows;
                 break;
 
             case EConfigType.Hysteria2:
@@ -113,10 +82,7 @@ public partial class AddServerWindow
                 cmbFingerprint.IsEnabled = false;
                 cmbFingerprint.Text = string.Empty;
 
-                Global.TuicCongestionControls.ForEach(it =>
-                {
-                    cmbHeaderType8.Items.Add(it);
-                });
+                cmbHeaderType8.ItemsSource = Global.TuicCongestionControls;
                 break;
 
             case EConfigType.WireGuard:
@@ -127,7 +93,14 @@ public partial class AddServerWindow
                 gridTls.Visibility = Visibility.Collapsed;
 
                 break;
+
+            case EConfigType.Anytls:
+                gridAnytls.Visibility = Visibility.Visible;
+                cmbCoreType.IsEnabled = false;
+                lstStreamSecurity.Add(Global.StreamSecurityReality);
+                break;
         }
+        cmbStreamSecurity.ItemsSource = lstStreamSecurity;
 
         gridTlsMore.Visibility = Visibility.Hidden;
 
@@ -191,6 +164,10 @@ public partial class AddServerWindow
                     this.Bind(ViewModel, vm => vm.SelectedSource.RequestHost, v => v.txtRequestHost9.Text).DisposeWith(disposables);
                     this.Bind(ViewModel, vm => vm.SelectedSource.ShortId, v => v.txtShortId9.Text).DisposeWith(disposables);
                     break;
+
+                case EConfigType.Anytls:
+                    this.Bind(ViewModel, vm => vm.SelectedSource.Id, v => v.txtId10.Text).DisposeWith(disposables);
+                    break;
             }
             this.Bind(ViewModel, vm => vm.SelectedSource.Network, v => v.cmbNetwork.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.HeaderType, v => v.cmbHeaderType.Text).DisposeWith(disposables);
@@ -203,18 +180,23 @@ public partial class AddServerWindow
             this.Bind(ViewModel, vm => vm.SelectedSource.AllowInsecure, v => v.cmbAllowInsecure.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.Fingerprint, v => v.cmbFingerprint.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.Alpn, v => v.cmbAlpn.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.CertTip, v => v.labCertPinning.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.Cert, v => v.txtCert.Text).DisposeWith(disposables);
             //reality
             this.Bind(ViewModel, vm => vm.SelectedSource.Sni, v => v.txtSNI2.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.Fingerprint, v => v.cmbFingerprint2.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.PublicKey, v => v.txtPublicKey.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.ShortId, v => v.txtShortId.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.SpiderX, v => v.txtSpiderX.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.SelectedSource.Mldsa65Verify, v => v.txtMldsa65Verify.Text).DisposeWith(disposables);
 
+            this.BindCommand(ViewModel, vm => vm.FetchCertCmd, v => v.btnFetchCert).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.FetchCertChainCmd, v => v.btnFetchCertChain).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
         });
 
-        this.Title = $"{profileItem.ConfigType}";
-        WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.CurrentTheme);
+        Title = $"{profileItem.ConfigType}";
+        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -222,7 +204,7 @@ public partial class AddServerWindow
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.DialogResult = true;
+                DialogResult = true;
                 break;
         }
         return await Task.FromResult(true);
@@ -267,44 +249,41 @@ public partial class AddServerWindow
 
     private void SetHeaderType()
     {
-        cmbHeaderType.Items.Clear();
+        var lstHeaderType = new List<string>();
 
         var network = cmbNetwork.SelectedItem.ToString();
         if (network.IsNullOrEmpty())
         {
-            cmbHeaderType.Items.Add(Global.None);
+            lstHeaderType.Add(Global.None);
+            cmbHeaderType.ItemsSource = lstHeaderType;
+            cmbHeaderType.SelectedIndex = 0;
             return;
         }
 
         if (network == nameof(ETransport.tcp))
         {
-            cmbHeaderType.Items.Add(Global.None);
-            cmbHeaderType.Items.Add(Global.TcpHeaderHttp);
+            lstHeaderType.Add(Global.None);
+            lstHeaderType.Add(Global.TcpHeaderHttp);
         }
         else if (network is nameof(ETransport.kcp) or nameof(ETransport.quic))
         {
-            cmbHeaderType.Items.Add(Global.None);
-            Global.KcpHeaderTypes.ForEach(it =>
-            {
-                cmbHeaderType.Items.Add(it);
-            });
+            lstHeaderType.Add(Global.None);
+            lstHeaderType.AddRange(Global.KcpHeaderTypes);
         }
         else if (network is nameof(ETransport.xhttp))
         {
-            Global.XhttpMode.ForEach(it =>
-            {
-                cmbHeaderType.Items.Add(it);
-            });
+            lstHeaderType.AddRange(Global.XhttpMode);
         }
         else if (network == nameof(ETransport.grpc))
         {
-            cmbHeaderType.Items.Add(Global.GrpcGunMode);
-            cmbHeaderType.Items.Add(Global.GrpcMultiMode);
+            lstHeaderType.Add(Global.GrpcGunMode);
+            lstHeaderType.Add(Global.GrpcMultiMode);
         }
         else
         {
-            cmbHeaderType.Items.Add(Global.None);
+            lstHeaderType.Add(Global.None);
         }
+        cmbHeaderType.ItemsSource = lstHeaderType;
         cmbHeaderType.SelectedIndex = 0;
     }
 

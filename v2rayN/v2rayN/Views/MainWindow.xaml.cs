@@ -1,15 +1,7 @@
-using System.ComponentModel;
-using System.Reactive.Disposables;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Threading;
 using MaterialDesignThemes.Wpf;
-using ReactiveUI;
-using Splat;
-using v2rayN.Handler;
+using v2rayN.Manager;
 
 namespace v2rayN.Views;
 
@@ -23,21 +15,19 @@ public partial class MainWindow
     {
         InitializeComponent();
 
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
         ThreadPool.RegisterWaitForSingleObject(App.ProgramStarted, OnProgramStarted, null, -1, false);
 
         App.Current.SessionEnding += Current_SessionEnding;
-        this.Closing += MainWindow_Closing;
-        this.PreviewKeyDown += MainWindow_PreviewKeyDown;
-        menuSettingsSetUWP.Click += menuSettingsSetUWP_Click;
-        menuPromotion.Click += menuPromotion_Click;
-        menuClose.Click += menuClose_Click;
+        Closing += MainWindow_Closing;
+        PreviewKeyDown += MainWindow_PreviewKeyDown;
+        menuSettingsSetUWP.Click += MenuSettingsSetUWP_Click;
+        menuPromotion.Click += MenuPromotion_Click;
+        menuClose.Click += MenuClose_Click;
         menuCheckUpdate.Click += MenuCheckUpdate_Click;
         menuBackupAndRestore.Click += MenuBackupAndRestore_Click;
 
-        MessageBus.Current.Listen<string>(EMsgCommand.SendSnackMsg.ToString()).Subscribe(DelegateSnackMsg);
         ViewModel = new MainWindowViewModel(UpdateViewHandler);
-        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(MainWindowViewModel));
 
         switch (_config.UiItem.MainGirdOrientation)
         {
@@ -80,7 +70,10 @@ public partial class MainWindow
             this.BindCommand(ViewModel, vm => vm.AddHysteria2ServerCmd, v => v.menuAddHysteria2Server).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddTuicServerCmd, v => v.menuAddTuicServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddWireguardServerCmd, v => v.menuAddWireguardServer).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.AddAnytlsServerCmd, v => v.menuAddAnytlsServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddCustomServerCmd, v => v.menuAddCustomServer).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.AddPolicyGroupServerCmd, v => v.menuAddPolicyGroupServer).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.AddProxyChainServerCmd, v => v.menuAddProxyChainServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddServerViaClipboardCmd, v => v.menuAddServerViaClipboard).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddServerViaScanCmd, v => v.menuAddServerViaScan).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddServerViaImageCmd, v => v.menuAddServerViaImage).DisposeWith(disposables);
@@ -96,6 +89,7 @@ public partial class MainWindow
             this.BindCommand(ViewModel, vm => vm.OptionSettingCmd, v => v.menuOptionSetting).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RoutingSettingCmd, v => v.menuRoutingSetting).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.DNSSettingCmd, v => v.menuDNSSetting).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.FullConfigTemplateCmd, v => v.menuFullConfigTemplate).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.GlobalHotkeySettingCmd, v => v.menuGlobalHotkeySetting).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RebootAsAdminCmd, v => v.menuRebootAsAdmin).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.ClearServerStatisticsCmd, v => v.menuClearServerStatistics).DisposeWith(disposables);
@@ -130,9 +124,37 @@ public partial class MainWindow
                     this.Bind(ViewModel, vm => vm.TabMainSelectedIndex, v => v.tabMain2.SelectedIndex).DisposeWith(disposables);
                     break;
             }
+
+            AppEvents.SendSnackMsgRequested
+              .AsObservable()
+              .ObserveOn(RxApp.MainThreadScheduler)
+              .Subscribe(async content => await DelegateSnackMsg(content))
+              .DisposeWith(disposables);
+
+            AppEvents.AppExitRequested
+              .AsObservable()
+              .ObserveOn(RxApp.MainThreadScheduler)
+              .Subscribe(_ => StorageUI())
+              .DisposeWith(disposables);
+
+            AppEvents.ShutdownRequested
+             .AsObservable()
+             .ObserveOn(RxApp.MainThreadScheduler)
+             .Subscribe(content => Shutdown(content))
+             .DisposeWith(disposables);
+
+            AppEvents.ShowHideWindowRequested
+             .AsObservable()
+             .ObserveOn(RxApp.MainThreadScheduler)
+             .Subscribe(blShow => ShowHideWindow(blShow))
+             .DisposeWith(disposables);
         });
 
-        this.Title = $"{Utils.GetVersion()} - {(Utils.IsAdministrator() ? ResUI.RunAsAdmin : ResUI.NotRunAsAdmin)}";
+        Title = $"{Utils.GetVersion()} - {(Utils.IsAdministrator() ? ResUI.RunAsAdmin : ResUI.NotRunAsAdmin)}";
+        if (_config.UiItem.AutoHideStartup)
+        {
+            WindowState = WindowState.Minimized;
+        }
 
         if (!_config.GuiItem.EnableHWA)
         {
@@ -140,8 +162,7 @@ public partial class MainWindow
         }
 
         AddHelpMenuItem();
-        WindowsHandler.Instance.RegisterGlobalHotkey(_config, OnHotkeyHandler, null);
-        MessageBus.Current.Listen<string>(EMsgCommand.AppExit.ToString()).Subscribe(StorageUI);
+        WindowsManager.Instance.RegisterGlobalHotkey(_config, OnHotkeyHandler, null);
     }
 
     #region Event
@@ -154,12 +175,10 @@ public partial class MainWindow
         }));
     }
 
-    private void DelegateSnackMsg(string content)
+    private async Task DelegateSnackMsg(string content)
     {
-        Application.Current?.Dispatcher.Invoke((() =>
-        {
-            MainSnackbar.MessageQueue?.Enqueue(content);
-        }), DispatcherPriority.Normal);
+        MainSnackbar.MessageQueue?.Enqueue(content);
+        await Task.CompletedTask;
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -168,58 +187,45 @@ public partial class MainWindow
         {
             case EViewAction.AddServerWindow:
                 if (obj is null)
+                {
                     return false;
-                return (new AddServerWindow((ProfileItem)obj)).ShowDialog() ?? false;
+                }
+
+                return new AddServerWindow((ProfileItem)obj).ShowDialog() ?? false;
 
             case EViewAction.AddServer2Window:
                 if (obj is null)
+                {
                     return false;
-                return (new AddServer2Window((ProfileItem)obj)).ShowDialog() ?? false;
+                }
+
+                return new AddServer2Window((ProfileItem)obj).ShowDialog() ?? false;
+
+            case EViewAction.AddGroupServerWindow:
+                if (obj is null)
+                {
+                    return false;
+                }
+
+                return new AddGroupServerWindow((ProfileItem)obj).ShowDialog() ?? false;
 
             case EViewAction.DNSSettingWindow:
-                return (new DNSSettingWindow().ShowDialog() ?? false);
+                return new DNSSettingWindow().ShowDialog() ?? false;
 
             case EViewAction.RoutingSettingWindow:
-                return (new RoutingSettingWindow().ShowDialog() ?? false);
+                return new RoutingSettingWindow().ShowDialog() ?? false;
 
             case EViewAction.OptionSettingWindow:
-                return (new OptionSettingWindow().ShowDialog() ?? false);
+                return new OptionSettingWindow().ShowDialog() ?? false;
+
+            case EViewAction.FullConfigTemplateWindow:
+                return new FullConfigTemplateWindow().ShowDialog() ?? false;
 
             case EViewAction.GlobalHotkeySettingWindow:
-                return (new GlobalHotkeySettingWindow().ShowDialog() ?? false);
+                return new GlobalHotkeySettingWindow().ShowDialog() ?? false;
 
             case EViewAction.SubSettingWindow:
-                return (new SubSettingWindow().ShowDialog() ?? false);
-
-            case EViewAction.ShowHideWindow:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ShowHideWindow((bool?)obj);
-                }), DispatcherPriority.Normal);
-                break;
-
-            case EViewAction.DispatcherStatistics:
-                if (obj is null)
-                    return false;
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.SetStatisticsResult((ServerSpeedItem)obj);
-                }), DispatcherPriority.Normal);
-                break;
-
-            case EViewAction.DispatcherReload:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.ReloadResult();
-                }), DispatcherPriority.Normal);
-                break;
-
-            case EViewAction.Shutdown:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    Application.Current.Shutdown();
-                }), DispatcherPriority.Normal);
-                break;
+                return new SubSettingWindow().ShowDialog() ?? false;
 
             case EViewAction.ScanScreenTask:
                 await ScanScreenTaskAsync();
@@ -230,18 +236,7 @@ public partial class MainWindow
                 break;
 
             case EViewAction.AddServerViaClipboard:
-                var clipboardData = WindowsUtils.GetClipboardData();
-                if (clipboardData.IsNotEmpty())
-                {
-                    ViewModel?.AddServerViaClipboardAsync(clipboardData);
-                }
-                break;
-
-            case EViewAction.AdjustMainLvColWidth:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    Locator.Current.GetService<ProfilesViewModel>()?.AutofitColumnWidthAsync();
-                }), DispatcherPriority.Normal);
+                await AddServerViaClipboardAsync();
                 break;
         }
 
@@ -260,7 +255,7 @@ public partial class MainWindow
             case EGlobalHotkey.SystemProxySet:
             case EGlobalHotkey.SystemProxyUnchanged:
             case EGlobalHotkey.SystemProxyPac:
-                Locator.Current.GetService<StatusBarViewModel>()?.SetListenerType((ESysProxyType)((int)e - 1));
+                AppEvents.SysProxyChangeRequested.Publish((ESysProxyType)((int)e - 1));
                 break;
         }
     }
@@ -275,7 +270,12 @@ public partial class MainWindow
     {
         Logging.SaveLog("Current_SessionEnding");
         StorageUI();
-        await ViewModel?.MyAppExitAsync(true);
+        await AppManager.Instance.AppExitAsync(false);
+    }
+
+    private void Shutdown(bool obj)
+    {
+        Application.Current.Shutdown();
     }
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -289,16 +289,7 @@ public partial class MainWindow
                     {
                         return;
                     }
-
-                    var clipboardData = WindowsUtils.GetClipboardData();
-                    if (clipboardData.IsNotEmpty())
-                    {
-                        var service = Locator.Current.GetService<MainWindowViewModel>();
-                        if (service != null)
-                        {
-                            _ = service.AddServerViaClipboardAsync(clipboardData);
-                        }
-                    }
+                    AddServerViaClipboardAsync().ContinueWith(_ => { });
 
                     break;
 
@@ -316,20 +307,29 @@ public partial class MainWindow
         }
     }
 
-    private void menuClose_Click(object sender, RoutedEventArgs e)
+    private void MenuClose_Click(object sender, RoutedEventArgs e)
     {
         StorageUI();
         ShowHideWindow(false);
     }
 
-    private void menuPromotion_Click(object sender, RoutedEventArgs e)
+    private void MenuPromotion_Click(object sender, RoutedEventArgs e)
     {
         ProcUtils.ProcessStart($"{Utils.Base64Decode(Global.PromotionUrl)}?t={DateTime.Now.Ticks}");
     }
 
-    private void menuSettingsSetUWP_Click(object sender, RoutedEventArgs e)
+    private void MenuSettingsSetUWP_Click(object sender, RoutedEventArgs e)
     {
         ProcUtils.ProcessStart(Utils.GetBinPath("EnableLoopback.exe"));
+    }
+
+    public async Task AddServerViaClipboardAsync()
+    {
+        var clipboardData = WindowsUtils.GetClipboardData();
+        if (clipboardData.IsNotEmpty() && ViewModel != null)
+        {
+            await ViewModel.AddServerViaClipboardAsync(clipboardData);
+        }
     }
 
     private async Task ScanScreenTaskAsync()
@@ -338,7 +338,7 @@ public partial class MainWindow
 
         if (Application.Current?.MainWindow is Window window)
         {
-            var bytes = QRCodeHelper.CaptureScreen(window);
+            var bytes = QRCodeWindowsUtils.CaptureScreen(window);
             await ViewModel?.ScanScreenResult(bytes);
         }
 
@@ -382,7 +382,7 @@ public partial class MainWindow
             this?.Show();
             if (this?.WindowState == WindowState.Minimized)
             {
-                this.WindowState = WindowState.Normal;
+                WindowState = WindowState.Normal;
             }
             this?.Activate();
             this?.Focus();
@@ -397,6 +397,10 @@ public partial class MainWindow
     protected override void OnLoaded(object? sender, RoutedEventArgs e)
     {
         base.OnLoaded(sender, e);
+        if (_config.UiItem.AutoHideStartup)
+        {
+            ShowHideWindow(false);
+        }
         RestoreUI();
     }
 
@@ -417,7 +421,7 @@ public partial class MainWindow
         }
     }
 
-    private void StorageUI(string? n = null)
+    private void StorageUI()
     {
         ConfigHandler.SaveWindowSizeItem(_config, GetType().Name, Width, Height);
 
@@ -433,10 +437,10 @@ public partial class MainWindow
 
     private void AddHelpMenuItem()
     {
-        var coreInfo = CoreInfoHandler.Instance.GetCoreInfo();
+        var coreInfo = CoreInfoManager.Instance.GetCoreInfo();
         foreach (var it in coreInfo
-            .Where(t => t.CoreType != ECoreType.v2fly
-                        && t.CoreType != ECoreType.hysteria))
+            .Where(t => t.CoreType is not ECoreType.v2fly
+                        and not ECoreType.hysteria))
         {
             var item = new MenuItem()
             {

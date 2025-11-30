@@ -1,8 +1,3 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using System.Windows.Input;
-using ReactiveUI;
-
 namespace v2rayN.Views;
 
 public partial class RoutingSettingWindow
@@ -11,9 +6,9 @@ public partial class RoutingSettingWindow
     {
         InitializeComponent();
 
-        this.Owner = Application.Current.MainWindow;
-        this.Closing += RoutingSettingWindow_Closing;
-        this.PreviewKeyDown += RoutingSettingWindow_PreviewKeyDown;
+        Owner = Application.Current.MainWindow;
+        Closing += RoutingSettingWindow_Closing;
+        PreviewKeyDown += RoutingSettingWindow_PreviewKeyDown;
         lstRoutings.SelectionChanged += lstRoutings_SelectionChanged;
         lstRoutings.MouseDoubleClick += LstRoutings_MouseDoubleClick;
         menuRoutingAdvancedSelectAll.Click += menuRoutingAdvancedSelectAll_Click;
@@ -21,18 +16,8 @@ public partial class RoutingSettingWindow
 
         ViewModel = new RoutingSettingViewModel(UpdateViewHandler);
 
-        Global.DomainStrategies.ForEach(it =>
-        {
-            cmbdomainStrategy.Items.Add(it);
-        });
-        Global.DomainMatchers.ForEach(it =>
-        {
-            cmbdomainMatcher.Items.Add(it);
-        });
-        Global.DomainStrategies4Singbox.ForEach(it =>
-        {
-            cmbdomainStrategy4Singbox.Items.Add(it);
-        });
+        cmbdomainStrategy.ItemsSource = Global.DomainStrategies;
+        cmbdomainStrategy4Singbox.ItemsSource = Global.DomainStrategies4Singbox;
 
         this.WhenActivated(disposables =>
         {
@@ -40,7 +25,6 @@ public partial class RoutingSettingWindow
             this.Bind(ViewModel, vm => vm.SelectedSource, v => v.lstRoutings.SelectedItem).DisposeWith(disposables);
 
             this.Bind(ViewModel, vm => vm.DomainStrategy, v => v.cmbdomainStrategy.Text).DisposeWith(disposables);
-            this.Bind(ViewModel, vm => vm.DomainMatcher, v => v.cmbdomainMatcher.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.DomainStrategy4Singbox, v => v.cmbdomainStrategy4Singbox.Text).DisposeWith(disposables);
 
             this.BindCommand(ViewModel, vm => vm.RoutingAdvancedAddCmd, v => v.menuRoutingAdvancedAdd).DisposeWith(disposables);
@@ -52,7 +36,7 @@ public partial class RoutingSettingWindow
 
             this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
         });
-        WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.CurrentTheme);
+        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -60,7 +44,7 @@ public partial class RoutingSettingWindow
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.DialogResult = true;
+                DialogResult = true;
                 break;
 
             case EViewAction.ShowYesNo:
@@ -73,8 +57,11 @@ public partial class RoutingSettingWindow
             case EViewAction.RoutingRuleSettingWindow:
 
                 if (obj is null)
+                {
                     return false;
-                return (new RoutingRuleSettingWindow((RoutingItem)obj)).ShowDialog() ?? false;
+                }
+
+                return new RoutingRuleSettingWindow((RoutingItem)obj).ShowDialog() ?? false;
         }
         return await Task.FromResult(true);
     }
@@ -83,7 +70,7 @@ public partial class RoutingSettingWindow
     {
         if (ViewModel?.IsModified == true)
         {
-            this.DialogResult = true;
+            DialogResult = true;
         }
     }
 
@@ -91,18 +78,27 @@ public partial class RoutingSettingWindow
     {
         if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
         {
-            if (e.Key == Key.A)
+            switch (e.Key)
             {
-                lstRoutings.SelectAll();
+                case Key.A:
+                    lstRoutings.SelectAll();
+                    break;
             }
         }
-        else if (e.Key is Key.Enter or Key.Return)
+        else
         {
-            ViewModel?.RoutingAdvancedSetDefault();
-        }
-        else if (e.Key == Key.Delete)
-        {
-            ViewModel?.RoutingAdvancedRemoveAsync();
+            switch (e.Key)
+            {
+                case Key.Enter:
+                    //case Key.Return:
+                    ViewModel?.RoutingAdvancedSetDefault();
+                    break;
+
+                case Key.Delete:
+                case Key.Back:
+                    ViewModel?.RoutingAdvancedRemoveAsync();
+                    break;
+            }
         }
     }
 
@@ -131,18 +127,18 @@ public partial class RoutingSettingWindow
 
     private void linkdomainStrategy4Singbox_Click(object sender, RoutedEventArgs e)
     {
-        ProcUtils.ProcessStart("https://sing-box.sagernet.org/zh/configuration/shared/listen/#domain_strategy");
+        ProcUtils.ProcessStart("https://sing-box.sagernet.org/zh/configuration/route/rule_action/#strategy");
     }
 
     private void btnCancel_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (ViewModel?.IsModified == true)
         {
-            this.DialogResult = true;
+            DialogResult = true;
         }
         else
         {
-            this.Close();
+            Close();
         }
     }
 }

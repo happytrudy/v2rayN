@@ -1,6 +1,3 @@
-using System.Reactive.Disposables;
-using Avalonia.Interactivity;
-using ReactiveUI;
 using v2rayN.Desktop.Base;
 using v2rayN.Desktop.Common;
 
@@ -17,17 +14,11 @@ public partial class AddServer2Window : WindowBase<AddServer2ViewModel>
     {
         InitializeComponent();
 
-        this.Loaded += Window_Loaded;
-        btnCancel.Click += (s, e) => this.Close();
+        Loaded += Window_Loaded;
+        btnCancel.Click += (s, e) => Close();
         ViewModel = new AddServer2ViewModel(profileItem, UpdateViewHandler);
 
-        foreach (ECoreType it in Enum.GetValues(typeof(ECoreType)))
-        {
-            if (it == ECoreType.v2rayN)
-                continue;
-            cmbCoreType.Items.Add(it.ToString());
-        }
-        cmbCoreType.Items.Add(string.Empty);
+        cmbCoreType.ItemsSource = Utils.GetEnumNames<ECoreType>().Where(t => t != ECoreType.v2rayN.ToString()).ToList().AppendEmpty();
 
         this.WhenActivated(disposables =>
         {
@@ -48,7 +39,7 @@ public partial class AddServer2Window : WindowBase<AddServer2ViewModel>
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.Close(true);
+                Close(true);
                 break;
 
             case EViewAction.BrowseServer:

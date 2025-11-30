@@ -1,12 +1,4 @@
-using System.Reactive.Disposables;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.ReactiveUI;
-using Avalonia.Threading;
 using DialogHostAvalonia;
-using ReactiveUI;
-using Splat;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views;
@@ -19,10 +11,9 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
     {
         InitializeComponent();
 
-        _config = AppHandler.Instance.Config;
-        //ViewModel = new StatusBarViewModel(UpdateViewHandler);
-        //Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(StatusBarViewModel));
-        ViewModel = Locator.Current.GetService<StatusBarViewModel>();
+        _config = AppManager.Instance.Config;
+
+        ViewModel = StatusBarViewModel.Instance;
         ViewModel?.InitUpdateView(UpdateViewHandler);
 
         txtRunningServerDisplay.Tapped += TxtRunningServerDisplay_Tapped;
@@ -55,20 +46,6 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
     {
         switch (action)
         {
-            case EViewAction.DispatcherServerAvailability:
-                if (obj is null)
-                    return false;
-                Dispatcher.UIThread.Post(() =>
-                    ViewModel?.TestServerAvailabilityResult((string)obj),
-                DispatcherPriority.Default);
-                break;
-
-            case EViewAction.DispatcherRefreshServersBiz:
-                Dispatcher.UIThread.Post(() =>
-                    ViewModel?.RefreshServersBiz(),
-                DispatcherPriority.Default);
-                break;
-
             case EViewAction.DispatcherRefreshIcon:
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -79,7 +56,10 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
 
             case EViewAction.SetClipboardData:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 await AvaUtils.SetClipboardData(this, (string)obj);
                 break;
 
@@ -104,13 +84,15 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
     {
         var dialog = new SudoPasswordInputView();
         var obj = await DialogHost.Show(dialog);
-        if (obj == null)
+
+        var password = obj?.ToString();
+        if (password.IsNullOrEmpty())
         {
             togEnableTun.IsChecked = false;
             return false;
         }
 
-        AppHandler.Instance.LinuxSudoPwd = obj.ToString() ?? string.Empty;
+        AppManager.Instance.LinuxSudoPwd = password;
         return true;
     }
 

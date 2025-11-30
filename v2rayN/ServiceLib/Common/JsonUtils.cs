@@ -1,13 +1,33 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-
 namespace ServiceLib.Common;
 
 public class JsonUtils
 {
     private static readonly string _tag = "JsonUtils";
+
+    private static readonly JsonSerializerOptions _defaultDeserializeOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip
+    };
+
+    private static readonly JsonSerializerOptions _defaultSerializeOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private static readonly JsonSerializerOptions _nullValueSerializeOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private static readonly JsonDocumentOptions _defaultDocumentOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Skip
+    };
 
     /// <summary>
     /// DeepCopy
@@ -15,9 +35,13 @@ public class JsonUtils
     /// <typeparam name="T"></typeparam>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public static T DeepCopy<T>(T obj)
+    public static T? DeepCopy<T>(T? obj)
     {
-        return Deserialize<T>(Serialize(obj, false))!;
+        if (obj is null)
+        {
+            return default;
+        }
+        return Deserialize<T>(Serialize(obj, false));
     }
 
     /// <summary>
@@ -34,11 +58,7 @@ public class JsonUtils
             {
                 return default;
             }
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            return JsonSerializer.Deserialize<T>(strJson, options);
+            return JsonSerializer.Deserialize<T>(strJson, _defaultDeserializeOptions);
         }
         catch
         {
@@ -51,7 +71,7 @@ public class JsonUtils
     /// </summary>
     /// <param name="strJson"></param>
     /// <returns></returns>
-    public static JsonNode? ParseJson(string strJson)
+    public static JsonNode? ParseJson(string? strJson)
     {
         try
         {
@@ -59,7 +79,7 @@ public class JsonUtils
             {
                 return null;
             }
-            return JsonNode.Parse(strJson);
+            return JsonNode.Parse(strJson, nodeOptions: null, _defaultDocumentOptions);
         }
         catch
         {
@@ -84,12 +104,7 @@ public class JsonUtils
             {
                 return result;
             }
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = indented,
-                DefaultIgnoreCondition = nullValue ? JsonIgnoreCondition.Never : JsonIgnoreCondition.WhenWritingNull,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
+            var options = nullValue ? _nullValueSerializeOptions : _defaultSerializeOptions;
             result = JsonSerializer.Serialize(obj, options);
         }
         catch (Exception ex)
@@ -105,7 +120,7 @@ public class JsonUtils
     /// <param name="obj"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static string Serialize(object? obj, JsonSerializerOptions options)
+    public static string Serialize(object? obj, JsonSerializerOptions? options)
     {
         var result = string.Empty;
         try
@@ -114,7 +129,7 @@ public class JsonUtils
             {
                 return result;
             }
-            result = JsonSerializer.Serialize(obj, options);
+            result = JsonSerializer.Serialize(obj, options ?? _defaultSerializeOptions);
         }
         catch (Exception ex)
         {
@@ -128,5 +143,8 @@ public class JsonUtils
     /// </summary>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public static JsonNode? SerializeToNode(object? obj) => JsonSerializer.SerializeToNode(obj);
+    public static JsonNode? SerializeToNode(object? obj, JsonSerializerOptions? options = null)
+    {
+        return JsonSerializer.SerializeToNode(obj, options);
+    }
 }

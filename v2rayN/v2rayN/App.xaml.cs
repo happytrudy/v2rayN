@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Threading;
-
 namespace v2rayN;
 
 /// <summary>
@@ -13,7 +9,7 @@ public partial class App : Application
 
     public App()
     {
-        this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
     }
@@ -27,7 +23,7 @@ public partial class App : Application
         var exePathKey = Utils.GetMd5(Utils.GetExePath());
 
         var rebootas = (e.Args ?? Array.Empty<string>()).Any(t => t == Global.RebootAs);
-        ProgramStarted = new EventWaitHandle(false, EventResetMode.AutoReset, exePathKey, out bool bCreatedNew);
+        ProgramStarted = new EventWaitHandle(false, EventResetMode.AutoReset, exePathKey, out var bCreatedNew);
         if (!rebootas && !bCreatedNew)
         {
             ProgramStarted.Set();
@@ -35,14 +31,14 @@ public partial class App : Application
             return;
         }
 
-        if (!AppHandler.Instance.InitApp())
+        if (!AppManager.Instance.InitApp())
         {
             UI.Show($"Loading GUI configuration file is abnormal,please restart the application{Environment.NewLine}加载GUI配置文件异常,请重启应用");
             Environment.Exit(0);
             return;
         }
 
-        AppHandler.Instance.InitComponents();
+        AppManager.Instance.InitComponents();
         base.OnStartup(e);
     }
 

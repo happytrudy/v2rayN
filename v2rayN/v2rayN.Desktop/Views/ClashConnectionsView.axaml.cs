@@ -1,10 +1,3 @@
-using System.Reactive.Disposables;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.ReactiveUI;
-using Avalonia.Threading;
-using ReactiveUI;
-
 namespace v2rayN.Desktop.Views;
 
 public partial class ClashConnectionsView : ReactiveUserControl<ClashConnectionsViewModel>
@@ -31,17 +24,6 @@ public partial class ClashConnectionsView : ReactiveUserControl<ClashConnections
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
     {
-        switch (action)
-        {
-            case EViewAction.DispatcherRefreshConnections:
-                if (obj is null)
-                    return false;
-                Dispatcher.UIThread.Post(() =>
-                    ViewModel?.RefreshConnections((List<ConnectionItem>?)obj),
-                 DispatcherPriority.Default);
-                break;
-        }
-
         return await Task.FromResult(true);
     }
 

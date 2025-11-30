@@ -71,7 +71,6 @@ public class GUIItem
     public bool DisplayRealTimeSpeed { get; set; }
     public bool KeepOlderDedupl { get; set; }
     public int AutoUpdateInterval { get; set; }
-    public bool EnableSecurityProtocolTls13 { get; set; }
     public int TrayMenuServersLimit { get; set; } = 20;
     public bool EnableHWA { get; set; } = false;
     public bool EnableLog { get; set; } = true;
@@ -142,6 +141,7 @@ public class CoreTypeItem
 public class TunModeItem
 {
     public bool EnableTun { get; set; }
+    public bool AutoRoute { get; set; } = true;
     public bool StrictRoute { get; set; } = true;
     public string Stack { get; set; }
     public int Mtu { get; set; }
@@ -164,7 +164,6 @@ public class RoutingBasicItem
 {
     public string DomainStrategy { get; set; }
     public string DomainStrategy4Singbox { get; set; }
-    public string DomainMatcher { get; set; }
     public string RoutingIndexId { get; set; }
 }
 
@@ -220,6 +219,8 @@ public class SystemProxyItem
     public string SystemProxyExceptions { get; set; }
     public bool NotProxyLocalAddress { get; set; } = true;
     public string SystemProxyAdvancedProtocol { get; set; }
+    public string? CustomSystemProxyPacPath { get; set; }
+    public string? CustomSystemProxyScriptPath { get; set; }
 }
 
 [Serializable]
@@ -252,4 +253,22 @@ public class WindowSizeItem
     public string TypeName { get; set; }
     public int Width { get; set; }
     public int Height { get; set; }
+}
+
+[Serializable]
+public class SimpleDNSItem
+{
+    public bool? UseSystemHosts { get; set; }
+    public bool? AddCommonHosts { get; set; }
+    public bool? FakeIP { get; set; }
+    public bool? GlobalFakeIp { get; set; }
+    public bool? BlockBindingQuery { get; set; }
+    public string? DirectDNS { get; set; }
+    public string? RemoteDNS { get; set; }
+    public string? BootstrapDNS { get; set; }
+    public string? RayStrategy4Freedom { get; set; }
+    public string? SingboxStrategy4Direct { get; set; }
+    public string? SingboxStrategy4Proxy { get; set; }
+    public string? Hosts { get; set; }
+    public string? DirectExpectedIPs { get; set; }
 }
