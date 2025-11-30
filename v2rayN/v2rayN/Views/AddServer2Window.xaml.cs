@@ -1,7 +1,3 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using ReactiveUI;
-
 namespace v2rayN.Views;
 
 public partial class AddServer2Window
@@ -10,17 +6,11 @@ public partial class AddServer2Window
     {
         InitializeComponent();
 
-        this.Owner = Application.Current.MainWindow;
-        this.Loaded += Window_Loaded;
+        Owner = Application.Current.MainWindow;
+        Loaded += Window_Loaded;
         ViewModel = new AddServer2ViewModel(profileItem, UpdateViewHandler);
 
-        foreach (ECoreType it in Enum.GetValues(typeof(ECoreType)))
-        {
-            if (it == ECoreType.v2rayN)
-                continue;
-            cmbCoreType.Items.Add(it.ToString());
-        }
-        cmbCoreType.Items.Add(string.Empty);
+        cmbCoreType.ItemsSource = Utils.GetEnumNames<ECoreType>().Where(t => t != ECoreType.v2rayN.ToString()).ToList().AppendEmpty();
 
         this.WhenActivated(disposables =>
         {
@@ -34,7 +24,7 @@ public partial class AddServer2Window
             this.BindCommand(ViewModel, vm => vm.EditServerCmd, v => v.btnEdit).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SaveServerCmd, v => v.btnSave).DisposeWith(disposables);
         });
-        WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.CurrentTheme);
+        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -42,11 +32,11 @@ public partial class AddServer2Window
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.DialogResult = true;
+                DialogResult = true;
                 break;
 
             case EViewAction.BrowseServer:
-                if (UI.OpenFileDialog(out string fileName, "Config|*.json|YAML|*.yaml;*.yml|All|*.*") != true)
+                if (UI.OpenFileDialog(out var fileName, "Config|*.json|YAML|*.yaml;*.yml|All|*.*") != true)
                 {
                     return false;
                 }

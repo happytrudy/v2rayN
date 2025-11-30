@@ -1,5 +1,3 @@
-using Avalonia;
-using Avalonia.ReactiveUI;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop;
@@ -46,7 +44,7 @@ internal class Program
             }
         }
 
-        if (!AppHandler.Instance.InitApp())
+        if (!AppManager.Instance.InitApp())
         {
             return false;
         }
@@ -56,16 +54,19 @@ internal class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
     {
-        return AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            //.WithInterFont()
-            .WithFontByDefault()
-            .LogToTrace()
-#if OS_OSX
-            .UseReactiveUI()
-            .With(new MacOSPlatformOptions { ShowInDock = AppHandler.Instance.Config.UiItem.MacOSShowInDock });
-#else
-            .UseReactiveUI();
-#endif
+        var builder = AppBuilder.Configure<App>()
+           .UsePlatformDetect()
+           //.WithInterFont()
+           .WithFontByDefault()
+           .LogToTrace()
+           .UseReactiveUI();
+
+        if (OperatingSystem.IsMacOS())
+        {
+            var showInDock = Design.IsDesignMode || AppManager.Instance.Config.UiItem.MacOSShowInDock;
+            builder = builder.With(new MacOSPlatformOptions { ShowInDock = showInDock });
+        }
+
+        return builder;
     }
 }

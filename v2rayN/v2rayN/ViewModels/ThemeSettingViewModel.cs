@@ -1,14 +1,6 @@
-using System.Reactive.Linq;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
-using DynamicData;
-using DynamicData.Binding;
 using MaterialDesignColors;
 using MaterialDesignColors.ColorManipulation;
 using MaterialDesignThemes.Wpf;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
 
 namespace v2rayN.ViewModels;
 
@@ -30,7 +22,7 @@ public class ThemeSettingViewModel : MyReactiveObject
 
     public ThemeSettingViewModel()
     {
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
 
         RegisterSystemColorSet(_config, Application.Current.MainWindow, ModifyTheme);
 
@@ -121,7 +113,7 @@ public class ThemeSettingViewModel : MyReactiveObject
                     _config.UiItem.CurrentLanguage = CurrentLanguage;
                     Thread.CurrentThread.CurrentUICulture = new(CurrentLanguage);
                     ConfigHandler.SaveConfig(_config);
-                    NoticeHandler.Instance.Enqueue(ResUI.NeedRebootTips);
+                    NoticeManager.Instance.Enqueue(ResUI.NeedRebootTips);
                 }
             });
     }
@@ -146,7 +138,9 @@ public class ThemeSettingViewModel : MyReactiveObject
     {
         double size = (long)CurrentFontSize;
         if (size < Global.MinFontSize)
+        {
             return;
+        }
 
         Application.Current.Resources["StdFontSize"] = size;
         Application.Current.Resources["StdFontSize1"] = size + 1;

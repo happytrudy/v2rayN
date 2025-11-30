@@ -1,8 +1,3 @@
-using System.Reactive;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
-using Splat;
-
 namespace ServiceLib.ViewModels;
 
 public class BackupAndRestoreViewModel : MyReactiveObject
@@ -22,7 +17,7 @@ public class BackupAndRestoreViewModel : MyReactiveObject
 
     public BackupAndRestoreViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
     {
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
         _updateView = updateView;
 
         WebDavCheckCmd = ReactiveCommand.CreateFromTask(async () =>
@@ -52,14 +47,14 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         _config.WebDavItem = SelectedSource;
         _ = await ConfigHandler.SaveConfig(_config);
 
-        var result = await WebDavHandler.Instance.CheckConnection();
+        var result = await WebDavManager.Instance.CheckConnection();
         if (result)
         {
             DisplayOperationMsg(ResUI.OperationSuccess);
         }
         else
         {
-            DisplayOperationMsg(WebDavHandler.Instance.GetLastError());
+            DisplayOperationMsg(WebDavManager.Instance.GetLastError());
         }
     }
 
@@ -70,7 +65,7 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         var result = await CreateZipFileFromDirectory(fileName);
         if (result)
         {
-            var result2 = await WebDavHandler.Instance.PutFile(fileName);
+            var result2 = await WebDavManager.Instance.PutFile(fileName);
             if (result2)
             {
                 DisplayOperationMsg(ResUI.OperationSuccess);
@@ -78,21 +73,21 @@ public class BackupAndRestoreViewModel : MyReactiveObject
             }
         }
 
-        DisplayOperationMsg(WebDavHandler.Instance.GetLastError());
+        DisplayOperationMsg(WebDavManager.Instance.GetLastError());
     }
 
     private async Task RemoteRestore()
     {
         DisplayOperationMsg();
         var fileName = Utils.GetTempPath(Utils.GetGuid());
-        var result = await WebDavHandler.Instance.GetRawFile(fileName);
+        var result = await WebDavManager.Instance.GetRawFile(fileName);
         if (result)
         {
             await LocalRestore(fileName);
             return;
         }
 
-        DisplayOperationMsg(WebDavHandler.Instance.GetLastError());
+        DisplayOperationMsg(WebDavManager.Instance.GetLastError());
     }
 
     public async Task<bool> LocalBackup(string fileName)
@@ -105,7 +100,7 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         }
         else
         {
-            DisplayOperationMsg(WebDavHandler.Instance.GetLastError());
+            DisplayOperationMsg(WebDavManager.Instance.GetLastError());
         }
 
         return result;
@@ -124,7 +119,7 @@ public class BackupAndRestoreViewModel : MyReactiveObject
             return;
         }
         //check
-        var lstFiles = FileManager.GetFilesFromZip(fileName);
+        var lstFiles = FileUtils.GetFilesFromZip(fileName);
         if (lstFiles is null || !lstFiles.Any(t => t.Contains(_guiConfigs)))
         {
             DisplayOperationMsg(ResUI.LocalRestoreInvalidZipTips);
@@ -136,12 +131,11 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         var result = await CreateZipFileFromDirectory(fileBackup);
         if (result)
         {
-            var service = Locator.Current.GetService<MainWindowViewModel>();
-            await service?.MyAppExitAsync(true);
+            await AppManager.Instance.AppExitAsync(false);
             await SQLiteHelper.Instance.DisposeDbConnectionAsync();
 
             var toPath = Utils.GetConfigPath();
-            FileManager.ZipExtractToFile(fileName, toPath, "");
+            FileUtils.ZipExtractToFile(fileName, toPath, "");
 
             if (Utils.IsWindows())
             {
@@ -154,11 +148,11 @@ public class BackupAndRestoreViewModel : MyReactiveObject
                     _ = ProcUtils.ProcessStart(upgradeFileName, Global.RebootAs, Utils.StartupPath());
                 }
             }
-            service?.Shutdown(true);
+            AppManager.Instance.Shutdown(true);
         }
         else
         {
-            DisplayOperationMsg(WebDavHandler.Instance.GetLastError());
+            DisplayOperationMsg(WebDavManager.Instance.GetLastError());
         }
     }
 
@@ -173,8 +167,8 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         var configDirZipTemp = Utils.GetTempPath($"v2rayN_{DateTime.Now:yyyyMMddHHmmss}");
         var configDirTemp = Path.Combine(configDirZipTemp, _guiConfigs);
 
-        FileManager.CopyDirectory(configDir, configDirTemp, false, true, "");
-        var ret = FileManager.CreateFromDirectory(configDirZipTemp, fileName);
+        FileUtils.CopyDirectory(configDir, configDirTemp, false, true, "");
+        var ret = FileUtils.CreateFromDirectory(configDirZipTemp, fileName);
         Directory.Delete(configDirZipTemp, true);
         return await Task.FromResult(ret);
     }

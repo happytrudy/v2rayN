@@ -1,8 +1,3 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using System.Windows.Threading;
-using ReactiveUI;
-
 namespace v2rayN.Views;
 
 public partial class MsgView
@@ -26,10 +21,7 @@ public partial class MsgView
         menuMsgViewCopyAll.Click += menuMsgViewCopyAll_Click;
         menuMsgViewClear.Click += menuMsgViewClear_Click;
 
-        Global.PresetMsgFilters.ForEach(it =>
-        {
-            cmbMsgFilter.Items.Add(it);
-        });
+        cmbMsgFilter.ItemsSource = Global.PresetMsgFilters;
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -38,11 +30,14 @@ public partial class MsgView
         {
             case EViewAction.DispatcherShowMsg:
                 if (obj is null)
+                {
                     return false;
-                Application.Current?.Dispatcher.Invoke((() =>
+                }
+
+                Application.Current?.Dispatcher.Invoke(() =>
                 {
                     ShowMsg(obj);
-                }), DispatcherPriority.ApplicationIdle);
+                }, DispatcherPriority.ApplicationIdle);
                 break;
         }
         return await Task.FromResult(true);
@@ -50,19 +45,22 @@ public partial class MsgView
 
     private void ShowMsg(object msg)
     {
-        txtMsg.BeginChange();
-        txtMsg.Text = msg.ToString();
+        if (txtMsg.LineCount > ViewModel?.NumMaxMsg)
+        {
+            ClearMsg();
+        }
+
+        txtMsg.AppendText(msg.ToString());
         if (togScrollToEnd.IsChecked ?? true)
         {
             txtMsg.ScrollToEnd();
         }
-        txtMsg.EndChange();
     }
 
     public void ClearMsg()
     {
-        ViewModel?.ClearMsg();
         txtMsg.Clear();
+        txtMsg.AppendText("----- Message cleared -----\n");
     }
 
     private void menuMsgViewSelectAll_Click(object sender, System.Windows.RoutedEventArgs e)

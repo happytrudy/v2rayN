@@ -1,10 +1,3 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
-using ReactiveUI;
-using Splat;
-
 namespace v2rayN.Views;
 
 /// <summary>
@@ -16,7 +9,6 @@ public partial class ClashProxiesView
     {
         InitializeComponent();
         ViewModel = new ClashProxiesViewModel(UpdateViewHandler);
-        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(ClashProxiesViewModel));
         lstProxyDetails.PreviewMouseDoubleClick += lstProxyDetails_PreviewMouseDoubleClick;
 
         this.WhenActivated(disposables =>
@@ -41,26 +33,6 @@ public partial class ClashProxiesView
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
     {
-        switch (action)
-        {
-            case EViewAction.DispatcherRefreshProxyGroups:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.RefreshProxyGroups();
-                }), DispatcherPriority.Normal);
-                break;
-
-            case EViewAction.DispatcherProxiesDelayTest:
-
-                if (obj is null)
-                    return false;
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    ViewModel?.ProxiesDelayTestResult((SpeedTestResult)obj);
-                }), DispatcherPriority.Normal);
-                break;
-        }
-
         return await Task.FromResult(true);
     }
 

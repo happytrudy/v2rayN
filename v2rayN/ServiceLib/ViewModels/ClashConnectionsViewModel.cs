@@ -1,16 +1,8 @@
-using System.Reactive;
-using System.Reactive.Linq;
-using DynamicData;
-using DynamicData.Binding;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
-
 namespace ServiceLib.ViewModels;
 
 public class ClashConnectionsViewModel : MyReactiveObject
 {
-    private IObservableCollection<ClashConnectionModel> _connectionItems = new ObservableCollectionExtended<ClashConnectionModel>();
-    public IObservableCollection<ClashConnectionModel> ConnectionItems => _connectionItems;
+    public IObservableCollection<ClashConnectionModel> ConnectionItems { get; } = new ObservableCollectionExtended<ClashConnectionModel>();
 
     [Reactive]
     public ClashConnectionModel SelectedSource { get; set; }
@@ -26,7 +18,7 @@ public class ClashConnectionsViewModel : MyReactiveObject
 
     public ClashConnectionsViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
     {
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
         _updateView = updateView;
         AutoRefresh = _config.ClashUIItem.ConnectionsAutoRefresh;
 
@@ -58,18 +50,22 @@ public class ClashConnectionsViewModel : MyReactiveObject
 
     private async Task GetClashConnections()
     {
-        var ret = await ClashApiHandler.Instance.GetClashConnectionsAsync();
+        var ret = await ClashApiManager.Instance.GetClashConnectionsAsync();
         if (ret == null)
         {
             return;
         }
 
-        _ = _updateView?.Invoke(EViewAction.DispatcherRefreshConnections, ret?.connections);
+        RxApp.MainThreadScheduler.Schedule(ret?.connections, (scheduler, model) =>
+        {
+            _ = RefreshConnections(model);
+            return Disposable.Empty;
+        });
     }
 
-    public void RefreshConnections(List<ConnectionItem>? connections)
+    public async Task RefreshConnections(List<ConnectionItem>? connections)
     {
-        _connectionItems.Clear();
+        ConnectionItems.Clear();
 
         var dtNow = DateTime.Now;
         var lstModel = new List<ClashConnectionModel>();
@@ -99,7 +95,8 @@ public class ClashConnectionsViewModel : MyReactiveObject
             return;
         }
 
-        _connectionItems.AddRange(lstModel);
+        ConnectionItems.AddRange(lstModel);
+        await Task.CompletedTask;
     }
 
     public async Task ClashConnectionClose(bool all)
@@ -116,9 +113,9 @@ public class ClashConnectionsViewModel : MyReactiveObject
         }
         else
         {
-            _connectionItems.Clear();
+            ConnectionItems.Clear();
         }
-        await ClashApiHandler.Instance.ClashConnectionClose(id);
+        await ClashApiManager.Instance.ClashConnectionClose(id);
         await GetClashConnections();
     }
 

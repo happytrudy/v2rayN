@@ -1,7 +1,3 @@
-using System.Reactive.Disposables;
-using System.Windows;
-using ReactiveUI;
-
 namespace v2rayN.Views;
 
 public partial class SubEditWindow
@@ -10,15 +6,12 @@ public partial class SubEditWindow
     {
         InitializeComponent();
 
-        this.Owner = Application.Current.MainWindow;
-        this.Loaded += Window_Loaded;
+        Owner = Application.Current.MainWindow;
+        Loaded += Window_Loaded;
 
         ViewModel = new SubEditViewModel(subItem, UpdateViewHandler);
 
-        Global.SubConvertTargets.ForEach(it =>
-        {
-            cmbConvertTarget.Items.Add(it);
-        });
+        cmbConvertTarget.ItemsSource = Global.SubConvertTargets;
 
         this.WhenActivated(disposables =>
         {
@@ -38,7 +31,7 @@ public partial class SubEditWindow
 
             this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
         });
-        WindowsUtils.SetDarkBorder(this, AppHandler.Instance.Config.UiItem.CurrentTheme);
+        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -46,7 +39,7 @@ public partial class SubEditWindow
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.DialogResult = true;
+                DialogResult = true;
                 break;
         }
         return await Task.FromResult(true);
@@ -55,5 +48,33 @@ public partial class SubEditWindow
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         txtRemarks.Focus();
+    }
+
+    private async void BtnSelectPrevProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var selectWindow = new ProfilesSelectWindow();
+        selectWindow.SetConfigTypeFilter(new[] { EConfigType.Custom, EConfigType.PolicyGroup, EConfigType.ProxyChain }, exclude: true);
+        if (selectWindow.ShowDialog() == true)
+        {
+            var profile = await selectWindow.ProfileItem;
+            if (profile != null)
+            {
+                txtPrevProfile.Text = profile.Remarks;
+            }
+        }
+    }
+
+    private async void BtnSelectNextProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var selectWindow = new ProfilesSelectWindow();
+        selectWindow.SetConfigTypeFilter(new[] { EConfigType.Custom, EConfigType.PolicyGroup, EConfigType.ProxyChain }, exclude: true);
+        if (selectWindow.ShowDialog() == true)
+        {
+            var profile = await selectWindow.ProfileItem;
+            if (profile != null)
+            {
+                txtNextProfile.Text = profile.Remarks;
+            }
+        }
     }
 }

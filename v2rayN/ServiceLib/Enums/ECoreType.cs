@@ -15,6 +15,7 @@ public enum ECoreType
     brook = 27,
     overtls = 28,
     shadowquic = 29,
-    echTunnel = 30,
+    mieru = 30,
+    echTunnel = 31,
     v2rayN = 99
 }

@@ -1,13 +1,5 @@
 using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Security.Principal;
-using System.Text;
 using CliWrap;
 using CliWrap.Buffered;
 
@@ -17,7 +9,7 @@ public class Utils
 {
     private static readonly string _tag = "Utils";
 
-    #region 转换函数
+    #region Conversion Functions
 
     /// <summary>
     /// Convert to comma-separated string
@@ -85,13 +77,19 @@ public class Utils
     /// Base64 Encode
     /// </summary>
     /// <param name="plainText"></param>
+    /// <param name="removePadding"></param>
     /// <returns></returns>
-    public static string Base64Encode(string plainText)
+    public static string Base64Encode(string plainText, bool removePadding = false)
     {
         try
         {
             var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
-            return Convert.ToBase64String(plainTextBytes);
+            var base64 = Convert.ToBase64String(plainTextBytes);
+            if (removePadding)
+            {
+                base64 = base64.TrimEnd('=');
+            }
+            return base64;
         }
         catch (Exception ex)
         {
@@ -112,7 +110,7 @@ public class Utils
         {
             if (plainText.IsNullOrEmpty())
             {
-                return "";
+                return string.Empty;
             }
 
             plainText = plainText.Trim()
@@ -308,7 +306,10 @@ public class Utils
     public static bool IsBase64String(string? plainText)
     {
         if (plainText.IsNullOrEmpty())
+        {
             return false;
+        }
+
         var buffer = new Span<byte>(new byte[plainText.Length]);
         return Convert.TryFromBase64String(plainText, buffer, out var _);
     }
@@ -323,9 +324,147 @@ public class Utils
         return text.Replace("，", ",").Replace(Environment.NewLine, ",");
     }
 
-    #endregion 转换函数
+    public static List<string> GetEnumNames<TEnum>() where TEnum : Enum
+    {
+        return Enum.GetValues(typeof(TEnum))
+            .Cast<TEnum>()
+            .Select(e => e.ToString())
+            .ToList();
+    }
 
-    #region 数据检查
+    public static Dictionary<string, List<string>> ParseHostsToDictionary(string hostsContent)
+    {
+        var userHostsMap = hostsContent
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            // skip full-line comments
+            .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("#"))
+            // strip inline comments (truncate at '#')
+            .Select(line =>
+            {
+                var index = line.IndexOf('#');
+                return index >= 0 ? line.Substring(0, index).Trim() : line;
+            })
+            // ensure line still contains valid parts
+            .Where(line => !string.IsNullOrWhiteSpace(line) && line.Contains(' '))
+            .Select(line => line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+            .Where(parts => parts.Length >= 2)
+            .GroupBy(parts => parts[0])
+            .ToDictionary(
+                group => group.Key,
+                group => group.SelectMany(parts => parts.Skip(1)).ToList()
+            );
+
+        return userHostsMap;
+    }
+
+    /// <summary>
+    /// Parse a possibly non-standard URL into scheme, domain, port, and path.
+    /// If parsing fails, the entire input is returned as domain, and others are empty or zero.
+    /// </summary>
+    /// <param name="url">Input URL or string</param>
+    /// <returns>(domain, scheme, port, path)</returns>
+    public static (string domain, string scheme, int port, string path) ParseUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return ("", "", 0, "");
+        }
+
+        // 1. First, try to parse using the standard Uri class.
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && !string.IsNullOrEmpty(uri.Host))
+        {
+            var scheme = uri.Scheme;
+            var domain = uri.Host;
+            var port = uri.IsDefaultPort ? 0 : uri.Port;
+            var path = uri.PathAndQuery;
+            return (domain, scheme, port, path);
+        }
+
+        // 2. Try to handle more general cases with a regular expression, including non-standard schemes.
+        // This regex captures the scheme (optional), authority (host+port), and path (optional).
+        var match = Regex.Match(url, @"^(?:([a-zA-Z][a-zA-Z0-9+.-]*):/{2,})?([^/?#]+)([^?#]*)?.*$");
+
+        if (match.Success)
+        {
+            var scheme = match.Groups[1].Value;
+            var authority = match.Groups[2].Value;
+            var path = match.Groups[3].Value;
+
+            // Remove userinfo from the authority part.
+            var atIndex = authority.LastIndexOf('@');
+            if (atIndex > 0)
+            {
+                authority = authority.Substring(atIndex + 1);
+            }
+
+            var (domain, port) = ParseAuthority(authority);
+
+            // If the parsed domain is empty, it means the authority part is malformed, so trigger the fallback.
+            if (!string.IsNullOrEmpty(domain))
+            {
+                return (domain, scheme, port, path);
+            }
+        }
+
+        // 3. If all of the above fails, execute the final fallback strategy.
+        return (url, "", 0, "");
+    }
+
+    /// <summary>
+    /// Helper function to parse domain and port from the authority part, with correct handling for IPv6.
+    /// </summary>
+    private static (string domain, int port) ParseAuthority(string authority)
+    {
+        if (string.IsNullOrEmpty(authority))
+        {
+            return ("", 0);
+        }
+
+        var port = 0;
+        var domain = authority;
+
+        // Handle IPv6 addresses, e.g., "[2001:db8::1]:443"
+        if (authority.StartsWith('[') && authority.Contains(']'))
+        {
+            var closingBracketIndex = authority.LastIndexOf(']');
+            if (closingBracketIndex < authority.Length - 1 && authority[closingBracketIndex + 1] == ':')
+            {
+                // Port exists
+                var portStr = authority.Substring(closingBracketIndex + 2);
+                if (int.TryParse(portStr, out var portNum))
+                {
+                    port = portNum;
+                }
+                domain = authority.Substring(0, closingBracketIndex + 1);
+            }
+            else
+            {
+                // No port
+                domain = authority;
+            }
+        }
+        else // Handle IPv4 or domain names
+        {
+            var lastColonIndex = authority.LastIndexOf(':');
+            // Ensure there are digits after the colon and that this colon is not part of an IPv6 address.
+            if (lastColonIndex > 0 && lastColonIndex < authority.Length - 1 && authority.Substring(lastColonIndex + 1).All(char.IsDigit))
+            {
+                var portStr = authority.Substring(lastColonIndex + 1);
+                if (int.TryParse(portStr, out var portNum))
+                {
+                    port = portNum;
+                    domain = authority.Substring(0, lastColonIndex);
+                }
+            }
+        }
+
+        return (domain, port);
+    }
+
+    #endregion Conversion Functions
+
+    #region Data Checks
 
     /// <summary>
     /// Determine if the input is a number
@@ -382,21 +521,74 @@ public class Utils
     {
         if (IPAddress.TryParse(ip, out var address))
         {
+            // Loopback address check (127.0.0.1 for IPv4, ::1 for IPv6)
+            if (IPAddress.IsLoopback(address))
+            {
+                return true;
+            }
+
             var ipBytes = address.GetAddressBytes();
-            if (ipBytes[0] == 10)
-                return true;
-            if (ipBytes[0] == 172 && ipBytes[1] >= 16 && ipBytes[1] <= 31)
-                return true;
-            if (ipBytes[0] == 192 && ipBytes[1] == 168)
-                return true;
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+            {
+                // IPv4 private address check
+                if (ipBytes[0] == 10)
+                {
+                    return true;
+                }
+
+                if (ipBytes[0] == 172 && ipBytes[1] >= 16 && ipBytes[1] <= 31)
+                {
+                    return true;
+                }
+
+                if (ipBytes[0] == 192 && ipBytes[1] == 168)
+                {
+                    return true;
+                }
+            }
+            else if (address.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                // IPv6 private address check
+                // Link-local address fe80::/10
+                if (ipBytes[0] == 0xfe && (ipBytes[1] & 0xc0) == 0x80)
+                {
+                    return true;
+                }
+
+                // Unique local address fc00::/7 (typically fd00::/8)
+                if ((ipBytes[0] & 0xfe) == 0xfc)
+                {
+                    return true;
+                }
+
+                // Private portion in IPv4-mapped addresses ::ffff:0:0/96
+                if (address.IsIPv4MappedToIPv6)
+                {
+                    var ipv4Bytes = ipBytes.Skip(12).ToArray();
+                    if (ipv4Bytes[0] == 10)
+                    {
+                        return true;
+                    }
+
+                    if (ipv4Bytes[0] == 172 && ipv4Bytes[1] >= 16 && ipv4Bytes[1] <= 31)
+                    {
+                        return true;
+                    }
+
+                    if (ipv4Bytes[0] == 192 && ipv4Bytes[1] == 168)
+                    {
+                        return true;
+                    }
+                }
+            }
         }
 
         return false;
     }
 
-    #endregion 数据检查
+    #endregion Data Checks
 
-    #region 测速
+    #region Speed Test
 
     private static bool PortInUse(int port)
     {
@@ -427,11 +619,11 @@ public class Utils
         return false;
     }
 
-    public static int GetFreePort(int defaultPort = 9090)
+    public static int GetFreePort(int defaultPort = 0)
     {
         try
         {
-            if (!Utils.PortInUse(defaultPort))
+            if (!(defaultPort == 0 || Utils.PortInUse(defaultPort)))
             {
                 return defaultPort;
             }
@@ -449,9 +641,9 @@ public class Utils
         return 59090;
     }
 
-    #endregion 测速
+    #endregion Speed Test
 
-    #region 杂项
+    #region Miscellaneous
 
     public static bool UpgradeAppExists(out string upgradeFileName)
     {
@@ -541,11 +733,17 @@ public class Utils
                 foreach (var host in hostsList)
                 {
                     if (host.StartsWith("#"))
+                    {
                         continue;
+                    }
+
                     var hostItem = host.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (hostItem.Length != 2)
+                    if (hostItem.Length < 2)
+                    {
                         continue;
-                    systemHosts.Add(hostItem.Last(), hostItem.First());
+                    }
+
+                    systemHosts.Add(hostItem[1], hostItem[0]);
                 }
             }
         }
@@ -595,7 +793,7 @@ public class Utils
         return null;
     }
 
-    #endregion 杂项
+    #endregion Miscellaneous
 
     #region TempPath
 
@@ -796,13 +994,13 @@ public class Utils
 
     #region Platform
 
-    public static bool IsWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    public static bool IsWindows() => OperatingSystem.IsWindows();
 
-    public static bool IsLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    public static bool IsLinux() => OperatingSystem.IsLinux();
 
-    public static bool IsOSX() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    public static bool IsMacOS() => OperatingSystem.IsMacOS();
 
-    public static bool IsNonWindows() => !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    public static bool IsNonWindows() => !OperatingSystem.IsWindows();
 
     public static string GetExeName(string name)
     {
@@ -814,6 +1012,45 @@ public class Utils
         if (IsWindows())
         {
             return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        return false;
+    }
+
+    public static bool IsPackagedInstall()
+    {
+        try
+        {
+            if (IsWindows() || IsMacOS())
+            {
+                return false;
+            }
+
+            var exePath = GetExePath();
+            var baseDir = string.IsNullOrEmpty(exePath) ? StartupPath() : Path.GetDirectoryName(exePath) ?? "";
+            var p = baseDir.Replace('\\', '/');
+
+            if (string.IsNullOrEmpty(p))
+            {
+                return false;
+            }
+
+            if (p.StartsWith("/opt/v2rayN", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (p.StartsWith("/usr/lib/v2rayN", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (p.StartsWith("/usr/share/v2rayN", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        catch
+        {
         }
         return false;
     }
@@ -833,7 +1070,7 @@ public class Utils
         if (SetUnixFileMode(fileName))
         {
             Logging.SaveLog($"Successfully set the file execution permission, {fileName}");
-            return "";
+            return string.Empty;
         }
 
         if (fileName.Contains(' '))

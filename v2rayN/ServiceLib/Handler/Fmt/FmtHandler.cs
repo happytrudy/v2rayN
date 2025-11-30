@@ -18,6 +18,7 @@ public class FmtHandler
                 EConfigType.Hysteria2 => Hysteria2Fmt.ToUri(item),
                 EConfigType.TUIC => TuicFmt.ToUri(item),
                 EConfigType.WireGuard => WireguardFmt.ToUri(item),
+                EConfigType.Anytls => AnytlsFmt.ToUri(item),
                 _ => null,
             };
 
@@ -26,7 +27,7 @@ public class FmtHandler
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
-            return "";
+            return string.Empty;
         }
     }
 
@@ -36,7 +37,7 @@ public class FmtHandler
 
         try
         {
-            string str = config.TrimEx();
+            var str = config.TrimEx();
             if (str.IsNullOrEmpty())
             {
                 msg = ResUI.FailedReadConfiguration;
@@ -74,6 +75,10 @@ public class FmtHandler
             else if (str.StartsWith(Global.ProtocolShares[EConfigType.WireGuard]))
             {
                 return WireguardFmt.Resolve(str, out msg);
+            }
+            else if (str.StartsWith(Global.ProtocolShares[EConfigType.Anytls]))
+            {
+                return AnytlsFmt.Resolve(str, out msg);
             }
             else
             {

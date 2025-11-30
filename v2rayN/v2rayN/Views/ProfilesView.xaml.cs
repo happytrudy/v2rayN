@@ -1,13 +1,7 @@
-using System.Reactive.Disposables;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
 using MaterialDesignThemes.Wpf;
-using ReactiveUI;
-using Splat;
 using v2rayN.Base;
 using Point = System.Windows.Point;
 
@@ -22,12 +16,12 @@ public partial class ProfilesView
         InitializeComponent();
         lstGroup.MaxHeight = Math.Floor(SystemParameters.WorkArea.Height * 0.20 / 40) * 40;
 
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
 
         btnAutofitColumnWidth.Click += BtnAutofitColumnWidth_Click;
         txtServerFilter.PreviewKeyDown += TxtServerFilter_PreviewKeyDown;
         lstProfiles.PreviewKeyDown += LstProfiles_PreviewKeyDown;
-        lstProfiles.SelectionChanged += lstProfiles_SelectionChanged;
+        lstProfiles.SelectionChanged += LstProfiles_SelectionChanged;
         lstProfiles.LoadingRow += LstProfiles_LoadingRow;
         menuSelectAll.Click += menuSelectAll_Click;
 
@@ -41,7 +35,6 @@ public partial class ProfilesView
         }
 
         ViewModel = new ProfilesViewModel(UpdateViewHandler);
-        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(ProfilesViewModel));
 
         this.WhenActivated(disposables =>
         {
@@ -61,11 +54,12 @@ public partial class ProfilesView
             this.BindCommand(ViewModel, vm => vm.CopyServerCmd, v => v.menuCopyServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SetDefaultServerCmd, v => v.menuSetDefaultServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.ShareServerCmd, v => v.menuShareServer).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRandomCmd, v => v.menuSetDefaultMultipleServerXrayRandom).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRoundRobinCmd, v => v.menuSetDefaultMultipleServerXrayRoundRobin).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastPingCmd, v => v.menuSetDefaultMultipleServerXrayLeastPing).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastLoadCmd, v => v.menuSetDefaultMultipleServerXrayLeastLoad).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerSingBoxLeastPingCmd, v => v.menuSetDefaultMultipleServerSingBoxLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayRandomCmd, v => v.menuGenGroupMultipleServerXrayRandom).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayRoundRobinCmd, v => v.menuGenGroupMultipleServerXrayRoundRobin).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayLeastPingCmd, v => v.menuGenGroupMultipleServerXrayLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayLeastLoadCmd, v => v.menuGenGroupMultipleServerXrayLeastLoad).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerSingBoxLeastPingCmd, v => v.menuGenGroupMultipleServerSingBoxLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerSingBoxFallbackCmd, v => v.menuGenGroupMultipleServerSingBoxFallback).DisposeWith(disposables);
 
             //servers move
             this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
@@ -83,17 +77,28 @@ public partial class ProfilesView
             this.BindCommand(ViewModel, vm => vm.SpeedServerCmd, v => v.menuSpeedServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SortServerResultCmd, v => v.menuSortServerResult).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RemoveInvalidServerResultCmd, v => v.menuRemoveInvalidServerResult).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.FastRealPingCmd, v => v.btnFastRealPing).DisposeWith(disposables);
 
             //servers export
             this.BindCommand(ViewModel, vm => vm.Export2ClientConfigCmd, v => v.menuExport2ClientConfig).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ClientConfigClipboardCmd, v => v.menuExport2ClientConfigClipboard).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ShareUrlCmd, v => v.menuExport2ShareUrl).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ShareUrlBase64Cmd, v => v.menuExport2ShareUrlBase64).DisposeWith(disposables);
+
+            AppEvents.AppExitRequested
+              .AsObservable()
+              .ObserveOn(RxApp.MainThreadScheduler)
+              .Subscribe(_ => StorageUI())
+              .DisposeWith(disposables);
+
+            AppEvents.AdjustMainLvColWidthRequested
+                .AsObservable()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => AutofitColumnWidth())
+                .DisposeWith(disposables);
         });
 
         RestoreUI();
-        ViewModel?.RefreshServers();
-        MessageBus.Current.Listen<string>(EMsgCommand.AppExit.ToString()).Subscribe(StorageUI);
     }
 
     #region Event
@@ -104,15 +109,11 @@ public partial class ProfilesView
         {
             case EViewAction.SetClipboardData:
                 if (obj is null)
-                    return false;
-                WindowsUtils.SetClipboardData((string)obj);
-                break;
-
-            case EViewAction.AdjustMainLvColWidth:
-                Application.Current?.Dispatcher.Invoke((() =>
                 {
-                    AutofitColumnWidth();
-                }), DispatcherPriority.Normal);
+                    return false;
+                }
+
+                WindowsUtils.SetClipboardData((string)obj);
                 break;
 
             case EViewAction.ProfilesFocus:
@@ -128,8 +129,11 @@ public partial class ProfilesView
 
             case EViewAction.SaveFileDialog:
                 if (obj is null)
+                {
                     return false;
-                if (UI.SaveFileDialog(out string fileName, "Config|*.json") != true)
+                }
+
+                if (UI.SaveFileDialog(out var fileName, "Config|*.json") != true)
                 {
                     return false;
                 }
@@ -138,39 +142,47 @@ public partial class ProfilesView
 
             case EViewAction.AddServerWindow:
                 if (obj is null)
+                {
                     return false;
-                return (new AddServerWindow((ProfileItem)obj)).ShowDialog() ?? false;
+                }
+
+                return new AddServerWindow((ProfileItem)obj).ShowDialog() ?? false;
 
             case EViewAction.AddServer2Window:
                 if (obj is null)
+                {
                     return false;
-                return (new AddServer2Window((ProfileItem)obj)).ShowDialog() ?? false;
+                }
+
+                return new AddServer2Window((ProfileItem)obj).ShowDialog() ?? false;
+
+            case EViewAction.AddGroupServerWindow:
+                if (obj is null)
+                {
+                    return false;
+                }
+
+                return new AddGroupServerWindow((ProfileItem)obj).ShowDialog() ?? false;
 
             case EViewAction.ShareServer:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 ShareServer((string)obj);
                 break;
 
             case EViewAction.SubEditWindow:
                 if (obj is null)
-                    return false;
-                return (new SubEditWindow((SubItem)obj)).ShowDialog() ?? false;
-
-            case EViewAction.DispatcherSpeedTest:
-                if (obj is null)
-                    return false;
-                Application.Current?.Dispatcher.Invoke((() =>
                 {
-                    ViewModel?.SetSpeedTestResult((SpeedTestResult)obj);
-                }), DispatcherPriority.Normal);
-                break;
+                    return false;
+                }
+
+                return new SubEditWindow((SubItem)obj).ShowDialog() ?? false;
 
             case EViewAction.DispatcherRefreshServersBiz:
-                Application.Current?.Dispatcher.Invoke((() =>
-                {
-                    _ = RefreshServersBiz();
-                }), DispatcherPriority.Normal);
+                Application.Current?.Dispatcher.Invoke(RefreshServersBiz, DispatcherPriority.Normal);
                 break;
         }
 
@@ -179,7 +191,7 @@ public partial class ProfilesView
 
     public async void ShareServer(string url)
     {
-        var img = QRCodeHelper.GetQRCode(url);
+        var img = QRCodeWindowsUtils.GetQRCode(url);
         var dialog = new QrcodeView()
         {
             imgQrcode = { Source = img },
@@ -189,20 +201,15 @@ public partial class ProfilesView
         await DialogHost.Show(dialog, "RootDialog");
     }
 
-    public async Task RefreshServersBiz()
+    public void RefreshServersBiz()
     {
-        if (ViewModel != null)
-        {
-            await ViewModel.RefreshServersBiz();
-        }
-
         if (lstProfiles.SelectedIndex > 0)
         {
             lstProfiles.ScrollIntoView(lstProfiles.SelectedItem, null);
         }
     }
 
-    private void lstProfiles_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void LstProfiles_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (ViewModel != null)
         {
@@ -223,7 +230,7 @@ public partial class ProfilesView
         }
         else
         {
-            ViewModel?.EditServerAsync(EConfigType.Custom);
+            ViewModel?.EditServerAsync();
         }
     }
 
@@ -259,7 +266,7 @@ public partial class ProfilesView
                     break;
 
                 case Key.D:
-                    ViewModel?.EditServerAsync(EConfigType.Custom);
+                    ViewModel?.EditServerAsync();
                     break;
 
                 case Key.F:
@@ -285,33 +292,37 @@ public partial class ProfilesView
         }
         else
         {
-            if (e.Key is Key.Enter or Key.Return)
+            switch (e.Key)
             {
-                ViewModel?.SetDefaultServer();
-            }
-            else if (e.Key == Key.Delete)
-            {
-                ViewModel?.RemoveServerAsync();
-            }
-            else if (e.Key == Key.T)
-            {
-                ViewModel?.MoveServer(EMove.Top);
-            }
-            else if (e.Key == Key.U)
-            {
-                ViewModel?.MoveServer(EMove.Up);
-            }
-            else if (e.Key == Key.D)
-            {
-                ViewModel?.MoveServer(EMove.Down);
-            }
-            else if (e.Key == Key.B)
-            {
-                ViewModel?.MoveServer(EMove.Bottom);
-            }
-            else if (e.Key == Key.Escape)
-            {
-                ViewModel?.ServerSpeedtestStop();
+                case Key.Enter:
+                    //case Key.Return:
+                    ViewModel?.SetDefaultServer();
+                    break;
+
+                case Key.Delete:
+                case Key.Back:
+                    ViewModel?.RemoveServerAsync();
+                    break;
+
+                case Key.T:
+                    ViewModel?.MoveServer(EMove.Top);
+                    break;
+
+                case Key.U:
+                    ViewModel?.MoveServer(EMove.Up);
+                    break;
+
+                case Key.D:
+                    ViewModel?.MoveServer(EMove.Down);
+                    break;
+
+                case Key.B:
+                    ViewModel?.MoveServer(EMove.Bottom);
+                    break;
+
+                case Key.Escape:
+                    ViewModel?.ServerSpeedtestStop();
+                    break;
             }
         }
     }
@@ -376,7 +387,7 @@ public partial class ProfilesView
         }
     }
 
-    private void StorageUI(string? n = null)
+    private void StorageUI()
     {
         List<ColumnItem> lvColumnItem = new();
         foreach (var t in lstProfiles.Columns)
@@ -429,8 +440,8 @@ public partial class ProfilesView
     private void LstProfiles_MouseMove(object sender, MouseEventArgs e)
     {
         // Get the current mouse position
-        Point mousePos = e.GetPosition(null);
-        Vector diff = startPoint - mousePos;
+        var mousePos = e.GetPosition(null);
+        var diff = startPoint - mousePos;
 
         if (e.LeftButton == MouseButtonState.Pressed &&
             (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
@@ -438,15 +449,22 @@ public partial class ProfilesView
         {
             // Get the dragged Item
             if (sender is not DataGrid listView)
+            {
                 return;
+            }
+
             var listViewItem = FindAncestor<DataGridRow>((DependencyObject)e.OriginalSource);
             if (listViewItem == null)
+            {
                 return;           // Abort
-                                  // Find the data behind the ListViewItem
-            ProfileItemModel item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
+            }
+            // Find the data behind the ListViewItem
+            var item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
             if (item == null)
+            {
                 return;                   // Abort
-                                          // Initialize the drag & drop operation
+            }
+            // Initialize the drag & drop operation
             startIndex = lstProfiles.SelectedIndex;
             DataObject dragData = new(formatData, item);
             DragDrop.DoDragDrop(listViewItem, dragData, DragDropEffects.Copy | DragDropEffects.Move);
@@ -467,7 +485,10 @@ public partial class ProfilesView
         {
             // Get the drop Item destination
             if (sender is not DataGrid listView)
+            {
                 return;
+            }
+
             var listViewItem = FindAncestor<DataGridRow>((DependencyObject)e.OriginalSource);
             if (listViewItem == null)
             {
@@ -476,9 +497,11 @@ public partial class ProfilesView
                 return;
             }
             // Find the data behind the Item
-            ProfileItemModel item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
+            var item = (ProfileItemModel)listView.ItemContainerGenerator.ItemFromContainer(listViewItem);
             if (item == null)
+            {
                 return;
+            }
             // Move item into observable collection
             // (this will be automatically reflected to lstView.ItemsSource)
             e.Effects = DragDropEffects.Move;

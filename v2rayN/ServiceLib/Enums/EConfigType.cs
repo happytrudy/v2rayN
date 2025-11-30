@@ -11,5 +11,8 @@ public enum EConfigType
     Hysteria2 = 7,
     TUIC = 8,
     WireGuard = 9,
-    HTTP = 10
+    HTTP = 10,
+    Anytls = 11,
+    PolicyGroup = 101,
+    ProxyChain = 102,
 }

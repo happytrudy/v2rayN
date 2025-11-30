@@ -1,13 +1,4 @@
-using System.Reactive.Disposables;
-using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.ReactiveUI;
-using Avalonia.Threading;
 using DialogHostAvalonia;
-using MsBox.Avalonia.Enums;
-using ReactiveUI;
-using Splat;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views;
@@ -26,7 +17,7 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
     {
         InitializeComponent();
 
-        _config = AppHandler.Instance.Config;
+        _config = AppManager.Instance.Config;
         _window = window;
 
         menuSelectAll.Click += menuSelectAll_Click;
@@ -47,7 +38,6 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
         //}
 
         ViewModel = new ProfilesViewModel(UpdateViewHandler);
-        Locator.CurrentMutable.RegisterLazySingleton(() => ViewModel, typeof(ProfilesViewModel));
 
         this.WhenActivated(disposables =>
         {
@@ -59,6 +49,9 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
             this.Bind(ViewModel, vm => vm.ServerFilter, v => v.txtServerFilter.Text).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddSubCmd, v => v.btnAddSub).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.EditSubCmd, v => v.btnEditSub).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.EditSubCmd, v => v.menuSubEdit).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.AddSubCmd, v => v.menuSubAdd).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.DeleteSubCmd, v => v.menuSubDelete).DisposeWith(disposables);
 
             //servers delete
             this.BindCommand(ViewModel, vm => vm.EditServerCmd, v => v.menuEditServer).DisposeWith(disposables);
@@ -67,11 +60,12 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
             this.BindCommand(ViewModel, vm => vm.CopyServerCmd, v => v.menuCopyServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SetDefaultServerCmd, v => v.menuSetDefaultServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.ShareServerCmd, v => v.menuShareServer).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRandomCmd, v => v.menuSetDefaultMultipleServerXrayRandom).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayRoundRobinCmd, v => v.menuSetDefaultMultipleServerXrayRoundRobin).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastPingCmd, v => v.menuSetDefaultMultipleServerXrayLeastPing).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerXrayLeastLoadCmd, v => v.menuSetDefaultMultipleServerXrayLeastLoad).DisposeWith(disposables);
-            this.BindCommand(ViewModel, vm => vm.SetDefaultMultipleServerSingBoxLeastPingCmd, v => v.menuSetDefaultMultipleServerSingBoxLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayRandomCmd, v => v.menuGenGroupMultipleServerXrayRandom).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayRoundRobinCmd, v => v.menuGenGroupMultipleServerXrayRoundRobin).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayLeastPingCmd, v => v.menuGenGroupMultipleServerXrayLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerXrayLeastLoadCmd, v => v.menuGenGroupMultipleServerXrayLeastLoad).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerSingBoxLeastPingCmd, v => v.menuGenGroupMultipleServerSingBoxLeastPing).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.GenGroupMultipleServerSingBoxFallbackCmd, v => v.menuGenGroupMultipleServerSingBoxFallback).DisposeWith(disposables);
 
             //servers move
             //this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.cmbMoveToGroup.ItemsSource).DisposeWith(disposables);
@@ -89,17 +83,28 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
             this.BindCommand(ViewModel, vm => vm.SpeedServerCmd, v => v.menuSpeedServer).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SortServerResultCmd, v => v.menuSortServerResult).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.RemoveInvalidServerResultCmd, v => v.menuRemoveInvalidServerResult).DisposeWith(disposables);
+            this.BindCommand(ViewModel, vm => vm.FastRealPingCmd, v => v.btnFastRealPing).DisposeWith(disposables);
 
             //servers export
             this.BindCommand(ViewModel, vm => vm.Export2ClientConfigCmd, v => v.menuExport2ClientConfig).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ClientConfigClipboardCmd, v => v.menuExport2ClientConfigClipboard).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ShareUrlCmd, v => v.menuExport2ShareUrl).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.Export2ShareUrlBase64Cmd, v => v.menuExport2ShareUrlBase64).DisposeWith(disposables);
+
+            AppEvents.AppExitRequested
+              .AsObservable()
+              .ObserveOn(RxApp.MainThreadScheduler)
+              .Subscribe(_ => StorageUI())
+              .DisposeWith(disposables);
+
+            AppEvents.AdjustMainLvColWidthRequested
+                .AsObservable()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => AutofitColumnWidth())
+                .DisposeWith(disposables);
         });
 
         RestoreUI();
-        ViewModel?.RefreshServers();
-        MessageBus.Current.Listen<string>(EMsgCommand.AppExit.ToString()).Subscribe(StorageUI);
     }
 
     private async void LstProfiles_Sorting(object? sender, DataGridColumnEventArgs e)
@@ -122,15 +127,11 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
         {
             case EViewAction.SetClipboardData:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 await AvaUtils.SetClipboardData(this, (string)obj);
-                break;
-
-            case EViewAction.AdjustMainLvColWidth:
-                Dispatcher.UIThread.Post(() =>
-                     AutofitColumnWidth(),
-               DispatcherPriority.Default);
-
                 break;
 
             case EViewAction.ProfilesFocus:
@@ -146,7 +147,10 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
 
             case EViewAction.SaveFileDialog:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 var fileName = await UI.SaveFileDialog(_window, "");
                 if (fileName.IsNullOrEmpty())
                 {
@@ -157,40 +161,47 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
 
             case EViewAction.AddServerWindow:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 return await new AddServerWindow((ProfileItem)obj).ShowDialog<bool>(_window);
 
             case EViewAction.AddServer2Window:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 return await new AddServer2Window((ProfileItem)obj).ShowDialog<bool>(_window);
+
+            case EViewAction.AddGroupServerWindow:
+                if (obj is null)
+                {
+                    return false;
+                }
+
+                return await new AddGroupServerWindow((ProfileItem)obj).ShowDialog<bool>(_window);
 
             case EViewAction.ShareServer:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 await ShareServer((string)obj);
                 break;
 
             case EViewAction.SubEditWindow:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 return await new SubEditWindow((SubItem)obj).ShowDialog<bool>(_window);
 
-            case EViewAction.DispatcherSpeedTest:
-                if (obj is null)
-                    return false;
-                Dispatcher.UIThread.Post(() =>
-                    ViewModel?.SetSpeedTestResult((SpeedTestResult)obj),
-                DispatcherPriority.Default);
-
-                break;
-
             case EViewAction.DispatcherRefreshServersBiz:
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _ = RefreshServersBiz();
-                },
-                DispatcherPriority.Default);
+                Dispatcher.UIThread.Post(RefreshServersBiz, DispatcherPriority.Default);
                 break;
         }
 
@@ -208,13 +219,8 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
         await DialogHost.Show(dialog);
     }
 
-    public async Task RefreshServersBiz()
+    public void RefreshServersBiz()
     {
-        if (ViewModel != null)
-        {
-            await ViewModel.RefreshServersBiz();
-        }
-
         if (lstProfiles.SelectedIndex >= 0)
         {
             lstProfiles.ScrollIntoView(lstProfiles.SelectedItem, null);
@@ -233,14 +239,17 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
     {
         var source = e.Source as Border;
         if (source?.Name == "HeaderBackground")
+        {
             return;
+        }
+
         if (_config.UiItem.DoubleClick2Activate)
         {
             ViewModel?.SetDefaultServer();
         }
         else
         {
-            ViewModel?.EditServerAsync(EConfigType.Custom);
+            ViewModel?.EditServerAsync();
         }
     }
 
@@ -281,7 +290,7 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
                     break;
 
                 case Key.D:
-                    ViewModel?.EditServerAsync(EConfigType.Custom);
+                    ViewModel?.EditServerAsync();
                     break;
 
                 case Key.F:
@@ -307,33 +316,37 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
         }
         else
         {
-            if (e.Key is Key.Enter or Key.Return)
+            switch (e.Key)
             {
-                ViewModel?.SetDefaultServer();
-            }
-            else if (e.Key == Key.Delete)
-            {
-                ViewModel?.RemoveServerAsync();
-            }
-            else if (e.Key == Key.T)
-            {
-                ViewModel?.MoveServer(EMove.Top);
-            }
-            else if (e.Key == Key.U)
-            {
-                ViewModel?.MoveServer(EMove.Up);
-            }
-            else if (e.Key == Key.D)
-            {
-                ViewModel?.MoveServer(EMove.Down);
-            }
-            else if (e.Key == Key.B)
-            {
-                ViewModel?.MoveServer(EMove.Bottom);
-            }
-            else if (e.Key == Key.Escape)
-            {
-                ViewModel?.ServerSpeedtestStop();
+                case Key.Enter:
+                    //case Key.Return:
+                    ViewModel?.SetDefaultServer();
+                    break;
+
+                case Key.Delete:
+                case Key.Back:
+                    ViewModel?.RemoveServerAsync();
+                    break;
+
+                case Key.T:
+                    ViewModel?.MoveServer(EMove.Top);
+                    break;
+
+                case Key.U:
+                    ViewModel?.MoveServer(EMove.Up);
+                    break;
+
+                case Key.D:
+                    ViewModel?.MoveServer(EMove.Down);
+                    break;
+
+                case Key.B:
+                    ViewModel?.MoveServer(EMove.Bottom);
+                    break;
+
+                case Key.Escape:
+                    ViewModel?.ServerSpeedtestStop();
+                    break;
             }
         }
     }
@@ -420,7 +433,7 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
         }
     }
 
-    private void StorageUI(string? n = null)
+    private void StorageUI()
     {
         List<ColumnItem> lvColumnItem = new();
         foreach (var item2 in lstProfiles.Columns)

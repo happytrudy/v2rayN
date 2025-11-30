@@ -1,10 +1,4 @@
-using System.Reactive.Disposables;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
 using DialogHostAvalonia;
-using DynamicData;
-using MsBox.Avalonia.Enums;
-using ReactiveUI;
 using v2rayN.Desktop.Base;
 using v2rayN.Desktop.Common;
 
@@ -19,7 +13,9 @@ public partial class SubSettingWindow : WindowBase<SubSettingViewModel>
         InitializeComponent();
 
         menuClose.Click += menuClose_Click;
-        this.Closing += SubSettingWindow_Closing;
+        Loaded += Window_Loaded;
+        Closing += SubSettingWindow_Closing;
+        KeyDown += SubSettingWindow_KeyDown;
         ViewModel = new SubSettingViewModel(UpdateViewHandler);
         lstSubscription.DoubleTapped += LstSubscription_DoubleTapped;
         lstSubscription.SelectionChanged += LstSubscription_SelectionChanged;
@@ -41,7 +37,7 @@ public partial class SubSettingWindow : WindowBase<SubSettingViewModel>
         switch (action)
         {
             case EViewAction.CloseWindow:
-                this.Close();
+                Close();
                 break;
 
             case EViewAction.ShowYesNo:
@@ -53,14 +49,20 @@ public partial class SubSettingWindow : WindowBase<SubSettingViewModel>
 
             case EViewAction.SubEditWindow:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 var window = new SubEditWindow((SubItem)obj);
                 await window.ShowDialog(this);
                 break;
 
             case EViewAction.ShareSub:
                 if (obj is null)
+                {
                     return false;
+                }
+
                 await ShareSub((string)obj);
                 break;
         }
@@ -93,7 +95,7 @@ public partial class SubSettingWindow : WindowBase<SubSettingViewModel>
     private void menuClose_Click(object? sender, RoutedEventArgs e)
     {
         _manualClose = true;
-        this.Close(ViewModel?.IsModified);
+        Close(ViewModel?.IsModified);
     }
 
     private void SubSettingWindow_Closing(object? sender, WindowClosingEventArgs e)
@@ -105,5 +107,18 @@ public partial class SubSettingWindow : WindowBase<SubSettingViewModel>
                 menuClose_Click(null, null);
             }
         }
+    }
+
+    private void SubSettingWindow_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            menuClose_Click(null, null);
+        }
+    }
+
+    private void Window_Loaded(object? sender, RoutedEventArgs e)
+    {
+        lstSubscription.Focus();
     }
 }
