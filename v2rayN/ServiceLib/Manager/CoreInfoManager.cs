@@ -219,7 +219,7 @@ public sealed class CoreInfoManager
                 {
                     CoreType = ECoreType.echTunnel,
                     CoreExes = [ "echTunnel", "echTunnel"],
-                    Arguments = "-l proxy://127.0.0.1:1080 -f wss://cloud.2027168.xyz:443/manager -token dubuxOpopop880",
+                    Arguments = "-config {0}",
                     Url =  GetCoreUrl(ECoreType.echTunnel),
                     AbsolutePath = false,
                 },
