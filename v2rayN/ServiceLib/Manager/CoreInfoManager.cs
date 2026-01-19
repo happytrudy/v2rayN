@@ -236,6 +236,14 @@ public sealed class CoreInfoManager
                         { "MIERU_CONFIG_JSON_FILE", "{0}" },
                     },
                 },
+                 new CoreInfo
+                {
+                    CoreType = ECoreType.sudoku,
+                    CoreExes = [ "sudoku" ],
+                    Arguments = "-c {0}",
+                    Url =  GetCoreUrl(ECoreType.sudoku),
+                    AbsolutePath = false,
+                },
         ];
     }
 
