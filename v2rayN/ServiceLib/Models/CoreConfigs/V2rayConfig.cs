@@ -20,7 +20,7 @@ public class Stats4Ray
 
 public class Metrics4Ray
 {
-    public string tag { get; set; }
+    public string listen { get; set; }
 }
 
 public class Policy4Ray
@@ -512,6 +512,7 @@ public class MaskSettings4Ray
 
     public string? length { get; set; }
     public string? delay { get; set; }
+    public int? maxSplit { get; set; }
 
     // noise
     public int? reset { get; set; }
